@@ -1,304 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounts Dashboard - Live P&L</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --sidebar-bg: #151c31; --main-bg: #f5f6f8; --primary-accent: #f57c00; --teal-accent: #4db6ac; --orange-accent: #ff9800; --red-accent: #d32f2f; --green-accent: #2e7d32; --text-primary: #333333; --text-secondary: #777777; --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); --card-radius: 12px; font-family: 'Inter', sans-serif; }
-        body { margin: 0; display: flex; background-color: var(--main-bg); color: var(--text-primary); }
-        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; padding: 20px; height: 100vh; position: sticky; top: 0; box-sizing: border-box; }
-        .logo-section { display: flex; align-items: center; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .logo-section i { font-size: 24px; color: var(--primary-accent); }
-        .logo-section .title { font-size: 20px; font-weight: bold; }
-        .menu-section { margin-top: 20px; flex-grow: 1; }
-        .menu-item { display: flex; align-items: center; gap: 15px; padding: 12px 10px; color: white; text-decoration: none; border-radius: 8px; font-size: 14px; margin-bottom: 5px; }
-        .menu-item.active { background-color: rgba(245, 124, 0, 0.1); color: var(--primary-accent); font-weight: bold; }
-        .menu-heading { color: var(--text-secondary); font-size: 11px; font-weight: bold; margin: 20px 0 10px 10px; text-transform: uppercase; }
-        .main-content { flex-grow: 1; padding: 30px; box-sizing: border-box; max-width: calc(100% - 250px); }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header-row h1 { margin: 0; font-size: 24px; }
-        
-        /* Top Cards */
-        .top-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        .card { background: white; padding: 20px; border-radius: var(--card-radius); box-shadow: var(--card-shadow); border-left: 4px solid; transition: all 0.3s ease; }
-        .card.teal { border-left-color: var(--teal-accent); }
-        .card.orange { border-left-color: var(--orange-accent); }
-        .card.red { border-left-color: var(--red-accent); }
-        .card.green { border-left-color: var(--green-accent); } /* Added Green Card CSS */
-        
-        .card .title { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; font-weight: bold; margin-bottom: 10px; }
-        .card .value { font-size: 28px; font-weight: bold; color: var(--teal-accent); margin-bottom: 5px; }
-        .card.orange .value { color: var(--orange-accent); }
-        .card.red .value { color: var(--red-accent); }
-        .card.green .value { color: var(--green-accent); } /* Added Green Value CSS */
-        .card .subtext { font-size: 12px; color: var(--text-secondary); }
-        
-        /* Table Layout Updates */
-        .table-container { background: white; padding: 20px; border-radius: var(--card-radius); box-shadow: var(--card-shadow); margin-bottom: 25px; }
-        .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .table-header-row h3 { margin: 0; font-size: 16px; }
-        .fy-filter-dropdown { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 13px; outline: none; cursor: pointer; background-color: #fff; }
-        .fy-filter-dropdown:focus { border-color: var(--primary-accent); }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        th { color: var(--text-secondary); font-size: 12px; text-transform: uppercase; }
-        .currency { text-align: right; font-family: monospace; font-size: 15px; }
-        
-        /* Text Colors */
-        .text-red { color: var(--red-accent); }
-        .text-teal { color: var(--teal-accent); }
-        .text-orange { color: var(--orange-accent); }
-        .text-green { color: var(--green-accent); } /* Added Green Text CSS for Table */
-        
-        .status-pill { background: #ffebee; color: #c62828; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .chart-box { background: white; padding: 20px; border-radius: var(--card-radius); box-shadow: var(--card-shadow); }
-        .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .chart-title { font-size: 15px; font-weight: bold; }
-        .chart-wrapper { position: relative; height: 250px; width: 100%; }
-        .loading { font-size: 16px; color: #f57c00; font-weight: bold; margin-bottom: 20px; padding: 15px; background: #fff3e0; border-radius: 8px; border: 1px solid #ffe0b2; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accounts Dashboard - Live P&L</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --sidebar:#0f1623;
+    --sidebar-hover:rgba(255,255,255,0.06);
+    --sidebar-active:rgba(251,146,60,0.12);
+    --bg:#f0f2f7;
+    --surface:#ffffff;
+    --surface-alt:#f7f8fc;
+    --accent:#f97316;
+    --accent-soft:#fff7ed;
+    --teal:#0d9488;
+    --teal-soft:#f0fdfa;
+    --amber:#d97706;
+    --amber-soft:#fffbeb;
+    --red:#dc2626;
+    --red-soft:#fef2f2;
+    --green:#16a34a;
+    --green-soft:#f0fdf4;
+    --text-1:#111827;
+    --text-2:#6b7280;
+    --text-3:#9ca3af;
+    --border:#e5e7eb;
+    --radius-sm:8px;
+    --radius:12px;
+    --radius-lg:16px;
+    --shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04);
+    --shadow-md:0 4px 20px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.04);
+  }
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);display:flex;min-height:100vh;font-size:14px;line-height:1.5}
+
+  /* SIDEBAR */
+  .sidebar{width:240px;background:var(--sidebar);display:flex;flex-direction:column;padding:0;position:sticky;top:0;height:100vh;flex-shrink:0}
+  .logo-area{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .logo-icon i{color:#fff;font-size:15px}
+  .logo-name{font-size:13px;font-weight:600;color:#fff;letter-spacing:0.04em;text-transform:uppercase}
+  .logo-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
+  .nav-section{padding:20px 12px;flex:1}
+  .nav-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-transform:uppercase;padding:0 8px;margin-bottom:8px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;color:rgba(255,255,255,0.5);text-decoration:none;border-radius:8px;font-size:13px;font-weight:400;margin-bottom:2px;transition:all 0.15s}
+  .nav-item:hover{background:var(--sidebar-hover);color:rgba(255,255,255,0.85)}
+  .nav-item.active{background:var(--sidebar-active);color:#fb923c;font-weight:500}
+  .nav-item i{width:16px;font-size:13px;text-align:center}
+  .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.06)}
+  .user-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px}
+  .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f97316,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+  .user-name{font-size:12px;color:rgba(255,255,255,0.6);font-weight:500}
+
+  /* MAIN */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;padding:28px 28px 40px}
+
+  /* TOPBAR */
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+  .page-title{font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:var(--text-1);line-height:1.2}
+  .page-sub{font-size:13px;color:var(--text-2);margin-top:4px}
+  .topbar-right{display:flex;align-items:center;gap:10px}
+  .btn-refresh{display:flex;align-items:center;gap:7px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all 0.15s}
+  .btn-refresh:hover{background:#ea580c;transform:translateY(-1px)}
+  .live-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--green-soft);color:var(--green);border-radius:20px;font-size:12px;font-weight:500;border:1px solid rgba(22,163,74,0.15)}
+  .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  /* LOADING */
+  .loading-bar{background:linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft));background-size:200%;animation:shimmer 1.5s infinite;border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--amber);font-weight:500;border:1px solid #fed7aa;margin-bottom:24px}
+  @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+
+  /* METRIC CARDS */
+  .metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+  .metric-card{background:var(--surface);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;transition:box-shadow 0.2s,transform 0.2s}
+  .metric-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .mc-teal::before{background:linear-gradient(90deg,var(--teal),#5eead4)}
+  .mc-amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+  .mc-green::before{background:linear-gradient(90deg,var(--green),#4ade80)}
+  .mc-red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+  .metric-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:14px}
+  .mc-teal .metric-icon{background:var(--teal-soft);color:var(--teal)}
+  .mc-amber .metric-icon{background:var(--amber-soft);color:var(--amber)}
+  .mc-green .metric-icon{background:var(--green-soft);color:var(--green)}
+  .mc-red .metric-icon{background:var(--red-soft);color:var(--red)}
+  .metric-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:6px}
+  .metric-value{font-size:26px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px}
+  .mc-teal .metric-value{color:var(--teal)}
+  .mc-amber .metric-value{color:var(--amber)}
+  .mc-green .metric-value{color:var(--green)}
+  .mc-red .metric-value{color:var(--red)}
+  .metric-hint{font-size:12px;color:var(--text-3)}
+  .metric-bg-icon{position:absolute;right:16px;bottom:12px;font-size:48px;opacity:0.04;color:var(--text-1)}
+
+  /* TABLE SECTION */
+  .section{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:24px;overflow:hidden}
+  .section-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border)}
+  .section-title{font-size:15px;font-weight:600;color:var(--text-1)}
+  .section-title span{font-weight:400;color:var(--text-2);font-size:13px;margin-left:6px}
+  .fy-select{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);background:#fff;cursor:pointer;outline:none;transition:border-color 0.15s}
+  .fy-select:focus{border-color:var(--accent)}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead tr{background:var(--surface-alt)}
+  th{padding:11px 16px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2);text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+  td{padding:13px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--surface-alt)}
+  .num-cell{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+  .center-cell{text-align:center}
+  .month-name{font-weight:600;color:var(--text-1)}
+  .fy-pill{font-size:11px;color:var(--text-2);background:var(--surface-alt);padding:2px 7px;border-radius:4px;border:1px solid var(--border);margin-left:8px;font-weight:400}
+  .c-teal{color:var(--teal)}
+  .c-amber{color:var(--amber)}
+  .c-green{color:var(--green)}
+  .c-red{color:var(--red)}
+  .count-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:500;color:var(--text-2)}
+  .status-live{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:600;border:1px solid rgba(22,163,74,0.15)}
+  .status-live::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+  .total-row td{background:var(--surface-alt);font-weight:600;font-size:14px;border-top:2px solid var(--border)}
+
+  /* CHARTS */
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .chart-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);padding:22px 24px}
+  .chart-head{margin-bottom:18px}
+  .chart-title{font-size:14px;font-weight:600;color:var(--text-1)}
+  .chart-sub{font-size:12px;color:var(--text-2);margin-top:2px}
+  .chart-legend{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+  .leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)}
+  .leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+  .chart-wrap{position:relative;height:220px;width:100%}
+</style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo-section"><i class="fas fa-layer-group"></i><div class="title">SKILL IN A BOX</div></div>
-        <div class="menu-section">
-            <div class="menu-heading">Main Menu</div>
-            <a href="#" class="menu-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
-            <a href="#" class="menu-item"><i class="fas fa-file-invoice-dollar"></i> Monthly Expense</a>
-            <a href="#" class="menu-item"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
-            <a href="#" class="menu-item"><i class="fas fa-chart-pie"></i> Monthly P&L</a>
-        </div>
+
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-icon"><i class="fas fa-layer-group"></i></div>
+    <div class="logo-name">Skill In A Box</div>
+    <div class="logo-sub">Finance Suite</div>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-label">Main Menu</div>
+    <a href="#" class="nav-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="#" class="nav-item"><i class="fas fa-file-invoice-dollar"></i> Monthly Expense</a>
+    <a href="#" class="nav-item"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
+    <a href="#" class="nav-item"><i class="fas fa-chart-pie"></i> Monthly P&amp;L</a>
+    <div class="nav-label" style="margin-top:20px">Reports</div>
+    <a href="#" class="nav-item"><i class="fas fa-download"></i> Export Data</a>
+    <a href="#" class="nav-item"><i class="fas fa-cog"></i> Settings</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">SK</div>
+      <div class="user-name">Accounts Admin</div>
     </div>
+  </div>
+</aside>
 
-    <div class="main-content">
-        <div class="header-row"><h1>Accounts Dashboard</h1></div>
-
-        <div id="loading-indicator" class="loading"><i class="fas fa-spinner fa-spin"></i> Fetching live data from Google Sheets...</div>
-
-        <div class="top-cards">
-            <div class="card teal"><div class="title">Total Revenue</div><div class="value" id="tot-revenue">₹0</div><div class="subtext">Sum of Total Fees across all sales tabs</div></div>
-            <div class="card orange"><div class="title">Total Expense</div><div class="value" id="tot-expense">₹0</div><div class="subtext">Sum of all expenses across Exp tabs</div></div>
-            
-            <div class="card" id="pnl-card"><div class="title">Net P&L</div><div class="value" id="tot-pnl">₹0</div><div class="subtext">Revenue - Expense</div></div>
-        </div>
-
-        <div class="table-container">
-            <div class="table-header-row">
-                <h3>Month-wise P&L Summary</h3>
-                <select id="fy-filter" class="fy-filter-dropdown">
-                    <option value="All">All Financial Years</option>
-                </select>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Month</th><th class="currency">Revenue (₹)</th><th class="currency">Expense (₹)</th><th class="currency">Net P&L (₹)</th><th style="text-align: center;">Trns Count</th><th>Status</th></tr>
-                </thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-
-        <div class="charts-grid">
-            <div class="chart-box"><div class="chart-header"><div class="chart-title">Revenue vs Expense</div></div><div class="chart-wrapper"><canvas id="barChart"></canvas></div></div>
-            <div class="chart-box"><div class="chart-header"><div class="chart-title">Net P&L Trend</div></div><div class="chart-wrapper"><canvas id="lineChart"></canvas></div></div>
-        </div>
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Accounts Dashboard</div>
+      <div class="page-sub">Live P&amp;L overview — synced from Google Sheets</div>
     </div>
+    <div class="topbar-right">
+      <div class="live-badge"><span class="live-dot"></span> Live</div>
+      <button class="btn-refresh" onclick="fetchAndRenderData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+  </div>
 
-    <script>
-        // YAHAN APNA APPS SCRIPT URL DAALIYE
-        const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
+  <div id="loading-indicator" class="loading-bar"><i class="fas fa-circle-notch fa-spin"></i> Fetching live data from Google Sheets…</div>
 
-        let globalMonthlyData = {}; 
-        let barChartInstance = null; 
-        let lineChartInstance = null;
+  <div class="metrics-grid">
+    <div class="metric-card mc-teal">
+      <div class="metric-icon"><i class="fas fa-arrow-trend-up"></i></div>
+      <div class="metric-label">Total Revenue</div>
+      <div class="metric-value" id="tot-revenue">₹0</div>
+      <div class="metric-hint">Sum of Total Fees across all sales tabs</div>
+      <i class="fas fa-arrow-trend-up metric-bg-icon"></i>
+    </div>
+    <div class="metric-card mc-amber">
+      <div class="metric-icon"><i class="fas fa-receipt"></i></div>
+      <div class="metric-label">Total Expense</div>
+      <div class="metric-value" id="tot-expense">₹0</div>
+      <div class="metric-hint">Sum of all expenses across Exp tabs</div>
+      <i class="fas fa-receipt metric-bg-icon"></i>
+    </div>
+    <div class="metric-card mc-green" id="pnl-card">
+      <div class="metric-icon" id="pnl-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="metric-label">Net P&amp;L</div>
+      <div class="metric-value" id="tot-pnl">₹0</div>
+      <div class="metric-hint">Revenue minus total expenses</div>
+      <i class="fas fa-scale-balanced metric-bg-icon"></i>
+    </div>
+  </div>
 
-        const formatINR = (amount) => {
-            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
-        };
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Month-wise P&amp;L Summary <span id="filter-label"></span></div>
+      <select id="fy-filter" class="fy-select">
+        <option value="All">All Financial Years</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Month</th>
+            <th style="text-align:right">Revenue (₹)</th>
+            <th style="text-align:right">Expense (₹)</th>
+            <th style="text-align:right">Net P&amp;L (₹)</th>
+            <th style="text-align:center">Transactions</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
 
-        const formatMonthName = (shortMonthName) => {
-            const months = {"Jan": "January", "Feb": "February", "Mar": "March", "Apr": "April", "May": "May", "Jun": "June", "Jul": "July", "Aug": "August", "Sep": "September", "Oct": "October", "Nov": "November", "Dec": "December"};
-            let parts = shortMonthName.split(" ");
-            if(parts.length === 2 && months[parts[0]]) {
-                return months[parts[0]] + " " + parts[1];
-            }
-            return shortMonthName;
-        };
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title">Revenue vs Expense</div>
+        <div class="chart-sub">Monthly comparison</div>
+      </div>
+      <div class="chart-legend">
+        <span class="leg-item"><span class="leg-dot" style="background:#0d9488"></span>Revenue</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#d97706"></span>Expense</span>
+      </div>
+      <div class="chart-wrap"><canvas id="barChart" role="img" aria-label="Bar chart comparing monthly revenue and expense">Monthly revenue vs expense chart</canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title">Net P&amp;L Trend</div>
+        <div class="chart-sub">Monthly profitability over time</div>
+      </div>
+      <div class="chart-legend" id="line-legend">
+        <span class="leg-item"><span class="leg-dot" style="background:#16a34a"></span>Net P&amp;L</span>
+      </div>
+      <div class="chart-wrap"><canvas id="lineChart" role="img" aria-label="Line chart showing net profit and loss trend">Net P&L trend chart</canvas></div>
+    </div>
+  </div>
+</main>
 
-        const getFinancialYear = (displayMonthName) => {
-            const parts = displayMonthName.split(" ");
-            const month = parts[0];
-            const year = parseInt(parts[1]);
-            
-            const fyStartMonths = ["April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            
-            if (fyStartMonths.includes(month)) {
-                return `FY ${year}-${(year + 1).toString().slice(-2)}`;
-            } else {
-                return `FY ${year - 1}-${year.toString().slice(-2)}`;
-            }
-        };
+<script>
+const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec";
+let globalMonthlyData={};
+let barChartInstance=null;
+let lineChartInstance=null;
 
-        async function fetchAndRenderData() {
-            try {
-                const response = await fetch(apiUrl);
-                const rawData = await response.json();
-                
-                document.getElementById('loading-indicator').style.display = 'none';
+const fmt=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v);
 
-                rawData.sales.forEach(row => {
-                    let monthKey = row["SourceTab"].toLowerCase().replace("sales", "").trim(); 
-                    monthKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+const fullMonth=s=>{
+  const m={"Jan":"January","Feb":"February","Mar":"March","Apr":"April","May":"May","Jun":"June","Jul":"July","Aug":"August","Sep":"September","Oct":"October","Nov":"November","Dec":"December"};
+  const p=s.split(" ");
+  return p.length===2&&m[p[0]]?m[p[0]]+" "+p[1]:s;
+};
 
-                    if(!globalMonthlyData[monthKey]) globalMonthlyData[monthKey] = { revenue: 0, expense: 0, count: 0 };
-                    
-                    globalMonthlyData[monthKey].revenue += Number(row["Total Fee"]) || 0;
-                    globalMonthlyData[monthKey].count += 1;
-                });
+const getFY=d=>{
+  const p=d.split(" "),mo=p[0],yr=parseInt(p[1]);
+  const fyMos=["April","May","June","July","August","September","October","November","December"];
+  return fyMos.includes(mo)?`FY ${yr}-${(yr+1).toString().slice(-2)}`:`FY ${yr-1}-${yr.toString().slice(-2)}`;
+};
 
-                rawData.expenses.forEach(row => {
-                    let monthKey = row["SourceTab"].toLowerCase().replace("exp", "").trim(); 
-                    monthKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+async function fetchAndRenderData(){
+  document.getElementById('loading-indicator').style.display='flex';
+  try{
+    const res=await fetch(apiUrl);
+    const raw=await res.json();
+    globalMonthlyData={};
+    raw.sales.forEach(r=>{
+      let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
+      k=k.charAt(0).toUpperCase()+k.slice(1);
+      if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
+      globalMonthlyData[k].revenue+=Number(r["Total Fee"])||0;
+      globalMonthlyData[k].count+=1;
+    });
+    raw.expenses.forEach(r=>{
+      let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
+      k=k.charAt(0).toUpperCase()+k.slice(1);
+      if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
+      globalMonthlyData[k].expense+=Number(r["Amount"])||0;
+    });
+    const fys=new Set();
+    for(const[k,d]of Object.entries(globalMonthlyData)){
+      d.displayMonth=fullMonth(k);
+      d.fy=getFY(d.displayMonth);
+      fys.add(d.fy);
+    }
+    document.getElementById('loading-indicator').style.display='none';
+    const sel=document.getElementById('fy-filter');
+    sel.innerHTML='<option value="All">All Financial Years</option>';
+    Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
+    sel.addEventListener('change',e=>renderDashboard(e.target.value));
+    renderDashboard('All');
+  }catch(e){
+    console.error(e);
+    const el=document.getElementById('loading-indicator');
+    el.innerHTML="<i class='fas fa-exclamation-circle'></i> Error connecting to Google Sheet API. Please check the URL.";
+    el.style.background="#fef2f2";el.style.color="#dc2626";el.style.border="1px solid #fecaca";
+  }
+}
 
-                    if(!globalMonthlyData[monthKey]) globalMonthlyData[monthKey] = { revenue: 0, expense: 0, count: 0 };
-                    
-                    globalMonthlyData[monthKey].expense += Number(row["Amount"]) || 0;
-                });
+function renderDashboard(fy){
+  let labels=[],revs=[],exps=[],pnls=[],totalRev=0,totalExp=0,totalPnl=0,html="",i=1;
+  const filterLabel=document.getElementById('filter-label');
+  filterLabel.textContent=fy!=='All'?`— ${fy}`:'';
 
-                const uniqueFYs = new Set();
-                for (const [monthKey, data] of Object.entries(globalMonthlyData)) {
-                    let displayMonth = formatMonthName(monthKey);
-                    let fy = getFinancialYear(displayMonth);
-                    globalMonthlyData[monthKey].displayMonth = displayMonth;
-                    globalMonthlyData[monthKey].fy = fy;
-                    uniqueFYs.add(fy);
-                }
+  for(const[,d]of Object.entries(globalMonthlyData)){
+    if(fy!=='All'&&d.fy!==fy)continue;
+    const pnl=d.revenue-d.expense;
+    labels.push(d.displayMonth.replace(/(\w+) (\d+)/,'$1 '$2));
+    revs.push(d.revenue);exps.push(d.expense);pnls.push(pnl);
+    totalRev+=d.revenue;totalExp+=d.expense;totalPnl+=pnl;
+    const pc=pnl>=0?'c-green':'c-red';
+    const pnlSign=pnl>=0?'+':'';
+    html+=`<tr>
+      <td style="color:var(--text-3);font-size:12px">${i++}</td>
+      <td><span class="month-name">${d.displayMonth}</span><span class="fy-pill">${d.fy}</span></td>
+      <td class="num-cell c-teal">${fmt(d.revenue)}</td>
+      <td class="num-cell c-amber">${fmt(d.expense)}</td>
+      <td class="num-cell ${pc}">${pnlSign}${fmt(pnl)}</td>
+      <td class="center-cell"><span class="count-badge">${d.count}</span></td>
+      <td><span class="status-live">Live</span></td>
+    </tr>`;
+  }
 
-                const fySelect = document.getElementById('fy-filter');
-                Array.from(uniqueFYs).sort().reverse().forEach(fy => {
-                    fySelect.innerHTML += `<option value="${fy}">${fy}</option>`;
-                });
+  if(i===1){
+    html=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-2)">No data for selected period</td></tr>`;
+  } else {
+    const tpc=totalPnl>=0?'c-green':'c-red';
+    const ts=totalPnl>=0?'+':'';
+    html+=`<tr class="total-row">
+      <td></td>
+      <td>Total <span style="font-size:12px;font-weight:400;color:var(--text-2)">(${i-1} months)</span></td>
+      <td class="num-cell c-teal">${fmt(totalRev)}</td>
+      <td class="num-cell c-amber">${fmt(totalExp)}</td>
+      <td class="num-cell ${tpc}">${ts}${fmt(totalPnl)}</td>
+      <td></td><td></td>
+    </tr>`;
+  }
 
-                fySelect.addEventListener('change', (e) => {
-                    renderDashboard(e.target.value);
-                });
+  document.getElementById('tot-revenue').textContent=fmt(totalRev);
+  document.getElementById('tot-expense').textContent=fmt(totalExp);
+  document.getElementById('tot-pnl').textContent=(totalPnl>=0?'+':'')+fmt(totalPnl);
+  document.getElementById('table-body').innerHTML=html;
 
-                renderDashboard('All');
+  const card=document.getElementById('pnl-card');
+  const icon=document.getElementById('pnl-icon');
+  if(totalPnl>=0){
+    card.className='metric-card mc-green';
+    icon.innerHTML='<i class="fas fa-arrow-trend-up"></i>';
+  } else {
+    card.className='metric-card mc-red';
+    icon.innerHTML='<i class="fas fa-arrow-trend-down"></i>';
+  }
 
-            } catch (error) {
-                console.error("Error loading live data", error);
-                document.getElementById('loading-indicator').innerHTML = "<i class='fas fa-exclamation-triangle'></i> Error connecting to Google Sheet API. Please check URL.";
-                document.getElementById('loading-indicator').style.color = "red";
-                document.getElementById('loading-indicator').style.backgroundColor = "#ffebee";
-                document.getElementById('loading-indicator').style.borderColor = "#ffcdd2";
-            }
-        }
+  renderCharts(labels,revs,exps,pnls,totalPnl);
+}
 
-        function renderDashboard(filterFY) {
-            let labels = [], revenues = [], expenses = [], pnls = [];
-            let totalRev = 0, totalExp = 0, totalPnl = 0;
-            let tableHtml = "";
-            let rowCount = 1;
+function renderCharts(labels,revs,exps,pnls,total){
+  if(barChartInstance)barChartInstance.destroy();
+  if(lineChartInstance)lineChartInstance.destroy();
 
-            for (const [monthKey, data] of Object.entries(globalMonthlyData)) {
-                if (filterFY !== 'All' && data.fy !== filterFY) {
-                    continue; 
-                }
+  const shortLabels=labels.map(l=>l.slice(0,3)+" "+l.split(" ")[1]);
+  const lineColor=total>=0?'#16a34a':'#dc2626';
+  const lineFill=total>=0?'rgba(22,163,74,0.06)':'rgba(220,38,38,0.06)';
 
-                let pnl = data.revenue - data.expense;
-                
-                labels.push(data.displayMonth);
-                revenues.push(data.revenue);
-                expenses.push(data.expense);
-                pnls.push(pnl);
+  document.getElementById('line-legend').innerHTML=`<span class="leg-item"><span class="leg-dot" style="background:${lineColor}"></span>Net P&L</span>`;
 
-                totalRev += data.revenue;
-                totalExp += data.expense;
-                totalPnl += pnl;
+  barChartInstance=new Chart(document.getElementById('barChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:shortLabels,datasets:[
+      {label:'Revenue',data:revs,backgroundColor:'#0d9488',borderRadius:5,borderSkipped:false},
+      {label:'Expense',data:exps,backgroundColor:'#d97706',borderRadius:5,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmt(ctx.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:11},color:'#9ca3af'}},y:{grid:{color:'#f3f4f6'},ticks:{font:{family:'DM Sans',size:11},color:'#9ca3af',callback:v=>fmt(v)},border:{display:false}}}}
+  });
 
-                // Dynamic color assignment for table rows based on P&L value
-                let pnlColorClass = pnl >= 0 ? 'text-green' : 'text-red';
+  lineChartInstance=new Chart(document.getElementById('lineChart').getContext('2d'),{
+    type:'line',
+    data:{labels:shortLabels,datasets:[{label:'Net P&L',data:pnls,borderColor:lineColor,backgroundColor:lineFill,fill:true,borderWidth:2.5,pointBackgroundColor:lineColor,pointRadius:4,pointHoverRadius:6,tension:0.35}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'P&L: '+fmt(ctx.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:11},color:'#9ca3af'}},y:{grid:{color:'#f3f4f6'},ticks:{font:{family:'DM Sans',size:11},color:'#9ca3af',callback:v=>fmt(v)},border:{display:false}}}}
+  });
+}
 
-                tableHtml += `
-                    <tr>
-                        <td>${rowCount++}</td>
-                        <td><strong>${data.displayMonth}</strong></td>
-                        <td class="currency text-teal">${formatINR(data.revenue)}</td>
-                        <td class="currency text-orange">${formatINR(data.expense)}</td>
-                        <td class="currency ${pnlColorClass}">${formatINR(pnl)}</td>
-                        <td style="text-align: center;">${data.count}</td>
-                        <td><span class="status-pill">Live</span></td>
-                    </tr>
-                `;
-            }
-
-            if (rowCount === 1) {
-                tableHtml = `<tr><td colspan="7" style="text-align: center; color: #777;">No data found for the selected filter.</td></tr>`;
-            } else {
-                let totalPnlColorClass = totalPnl >= 0 ? 'text-green' : 'text-red';
-                tableHtml += `
-                    <tr style="background-color: #f9fafb; font-weight: bold;">
-                        <td colspan="2">Total (${rowCount - 1} Months)</td>
-                        <td class="currency text-teal">${formatINR(totalRev)}</td>
-                        <td class="currency text-orange">${formatINR(totalExp)}</td>
-                        <td class="currency ${totalPnlColorClass}">${formatINR(totalPnl)}</td>
-                        <td></td><td></td>
-                    </tr>
-                `;
-            }
-
-            document.getElementById('tot-revenue').innerText = formatINR(totalRev);
-            document.getElementById('tot-expense').innerText = formatINR(totalExp);
-            document.getElementById('tot-pnl').innerText = formatINR(totalPnl);
-            document.getElementById('table-body').innerHTML = tableHtml;
-
-            // Dynamic color assignment for the Top Metric Card
-            const pnlCard = document.getElementById('pnl-card');
-            if (totalPnl >= 0) {
-                pnlCard.className = 'card green'; // Turns card left-border and text green
-            } else {
-                pnlCard.className = 'card red'; // Turns card left-border and text red
-            }
-
-            renderCharts(labels, revenues, expenses, pnls);
-        }
-
-        function renderCharts(labels, revenues, expenses, pnls) {
-            if (barChartInstance) barChartInstance.destroy();
-            if (lineChartInstance) lineChartInstance.destroy();
-
-            const ctxBar = document.getElementById('barChart').getContext('2d');
-            barChartInstance = new Chart(ctxBar, { 
-                type: 'bar', 
-                data: { 
-                    labels: labels, 
-                    datasets: [ 
-                        { label: 'Revenue', data: revenues, backgroundColor: '#4db6ac', borderRadius: 4 }, 
-                        { label: 'Expense', data: expenses, backgroundColor: '#ff9800', borderRadius: 4 } 
-                    ] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } 
-            });
-
-            // Make the Line Chart points/line green if overall profitable, red if loss (Optional visual boost)
-            const overallPnlColor = pnls.reduce((a,b)=>a+b, 0) >= 0 ? '#2e7d32' : '#d32f2f';
-
-            const ctxLine = document.getElementById('lineChart').getContext('2d');
-            lineChartInstance = new Chart(ctxLine, { 
-                type: 'line', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ label: 'Net P&L', data: pnls, borderColor: overallPnlColor, backgroundColor: overallPnlColor, borderWidth: 2, pointRadius: 5, tension: 0.3 }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
-            });
-        }
-
-        window.onload = fetchAndRenderData;
-    </script>
+window.onload=fetchAndRenderData;
+</script>
 </body>
 </html>
