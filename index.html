@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounts Dashboard - P&L Live</title>
+    <title>Accounts Dashboard - Live P&L</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Same CSS as before */
+        /* Exact Same CSS */
         :root { --sidebar-bg: #151c31; --main-bg: #f5f6f8; --primary-accent: #f57c00; --teal-accent: #4db6ac; --orange-accent: #ff9800; --red-accent: #d32f2f; --green-accent: #2e7d32; --text-primary: #333333; --text-secondary: #777777; --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); --card-radius: 12px; font-family: 'Inter', sans-serif; }
         body { margin: 0; display: flex; background-color: var(--main-bg); color: var(--text-primary); }
         .sidebar { width: 250px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; padding: 20px; height: 100vh; position: sticky; top: 0; box-sizing: border-box; }
@@ -46,16 +46,12 @@
         .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
         .chart-title { font-size: 15px; font-weight: bold; }
         .chart-wrapper { position: relative; height: 250px; width: 100%; }
-        .loading { font-size: 18px; color: var(--primary-accent); font-weight: bold; margin-bottom: 20px; }
+        .loading { font-size: 16px; color: #f57c00; font-weight: bold; margin-bottom: 20px; padding: 15px; background: #fff3e0; border-radius: 8px; border: 1px solid #ffe0b2; }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
-        <div class="logo-section">
-            <i class="fas fa-layer-group"></i>
-            <div class="title">SKILLINABOX</div>
-        </div>
+        <div class="logo-section"><i class="fas fa-layer-group"></i><div class="title">SKILL IN A BOX</div></div>
         <div class="menu-section">
             <div class="menu-heading">Main Menu</div>
             <a href="#" class="menu-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
@@ -66,80 +62,52 @@
     </div>
 
     <div class="main-content">
-        <div class="header-row">
-            <h1>Accounts Dashboard</h1>
-        </div>
+        <div class="header-row"><h1>Accounts Dashboard</h1></div>
 
-        <div id="loading-indicator" class="loading">Fetching live data from Google Sheets, please wait...</div>
+        <div id="loading-indicator" class="loading"><i class="fas fa-spinner fa-spin"></i> Fetching live data from Google Sheets...</div>
 
         <div class="top-cards">
-            <div class="card teal">
-                <div class="title">Total Collection</div>
-                <div class="value" id="tot-collection">₹0</div>
-                <div class="subtext">Sum of Total Fees across all sales tabs</div>
-            </div>
-            <div class="card orange">
-                <div class="title">Total Expense</div>
-                <div class="value" id="tot-expense">₹0</div>
-                <div class="subtext">Sum of all expenses across tabs</div>
-            </div>
-            <div class="card red">
-                <div class="title">Net P&L</div>
-                <div class="value" id="tot-pnl">₹0</div>
-                <div class="subtext">Collection - Expense</div>
-            </div>
+            <div class="card teal"><div class="title">Total Collection</div><div class="value" id="tot-collection">₹0</div><div class="subtext">Sum of Total Fees across all sales tabs</div></div>
+            <div class="card orange"><div class="title">Total Expense</div><div class="value" id="tot-expense">₹0</div><div class="subtext">Sum of all expenses across Exp tabs</div></div>
+            <div class="card red"><div class="title">Net P&L</div><div class="value" id="tot-pnl">₹0</div><div class="subtext">Collection - Expense</div></div>
         </div>
 
         <div class="table-container">
             <h3>Month-wise P&L Summary</h3>
             <table>
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Month</th>
-                        <th class="currency">Collection (₹)</th>
-                        <th class="currency">Expense (₹)</th>
-                        <th class="currency">Net P&L (₹)</th>
-                        <th style="text-align: center;">Trns Count</th>
-                        <th>Status</th>
-                    </tr>
+                    <tr><th>#</th><th>Month</th><th class="currency">Collection (₹)</th><th class="currency">Expense (₹)</th><th class="currency">Net P&L (₹)</th><th style="text-align: center;">Trns Count</th><th>Status</th></tr>
                 </thead>
-                <tbody id="table-body">
-                    </tbody>
+                <tbody id="table-body"></tbody>
             </table>
         </div>
 
         <div class="charts-grid">
-            <div class="chart-box">
-                <div class="chart-header">
-                    <div class="chart-title">Collection vs Expense</div>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="barChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-box">
-                <div class="chart-header">
-                    <div class="chart-title">Net P&L Trend</div>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="lineChart"></canvas>
-                </div>
-            </div>
+            <div class="chart-box"><div class="chart-header"><div class="chart-title">Collection vs Expense</div></div><div class="chart-wrapper"><canvas id="barChart"></canvas></div></div>
+            <div class="chart-box"><div class="chart-header"><div class="chart-title">Net P&L Trend</div></div><div class="chart-wrapper"><canvas id="lineChart"></canvas></div></div>
         </div>
     </div>
 
     <script>
-        // REPLACE THIS URL WITH YOUR NEW APPS SCRIPT WEB APP URL
+        // YAHAN APNA NAYA APPS SCRIPT URL DAALIYE
         const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
         const formatINR = (amount) => {
             return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
         };
 
+        // Month format theek karne ka function ("Jan 2026" -> "January 2026")
+        const formatMonthName = (shortMonthName) => {
+            const months = {"Jan": "January", "Feb": "February", "Mar": "March", "Apr": "April", "May": "May", "Jun": "June", "Jul": "July", "Aug": "August", "Sep": "September", "Oct": "October", "Nov": "November", "Dec": "December"};
+            let parts = shortMonthName.split(" ");
+            if(parts.length === 2 && months[parts[0]]) {
+                return months[parts[0]] + " " + parts[1];
+            }
+            return shortMonthName;
+        };
+
         async function fetchAndRenderData() {
             try {
-                // 1. Fetching LIVE data from your Google Sheet
                 const response = await fetch(apiUrl);
                 const rawData = await response.json();
                 
@@ -147,37 +115,43 @@
 
                 let monthlySummary = {};
                 
-                // 2. Loop through all rows dynamically
-                rawData.forEach(row => {
-                    let month = row["SourceTab"]; // This gives us 'Jan 2026 sales'
+                // 1. Process Sales (Collections)
+                rawData.sales.forEach(row => {
+                    // Extract exact month: "Jan 2026 sales" -> "Jan 2026"
+                    let monthKey = row["SourceTab"].toLowerCase().replace("sales", "").trim(); 
                     
-                    // Cleanup tab name for display
-                    let cleanMonthName = month.replace(/ sales/i, "").trim();
+                    // Standardize string casing
+                    monthKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
 
-                    if(!monthlySummary[cleanMonthName]) {
-                        monthlySummary[cleanMonthName] = { collection: 0, expense: 0, count: 0 };
-                    }
+                    if(!monthlySummary[monthKey]) monthlySummary[monthKey] = { collection: 0, expense: 0, count: 0 };
                     
-                    // EXACT CALCULATION HAPPENS HERE
-                    // Ensure the header name exactly matches your sheet (e.g., 'Total Fee')
-                    let fee = Number(row["Total Fee"]) || 0; 
-                    let exp = Number(row["Expense"]) || 0; // Update "Expense" to whatever your column name is
-
-                    monthlySummary[cleanMonthName].collection += fee;
-                    monthlySummary[cleanMonthName].expense += exp;
-                    monthlySummary[cleanMonthName].count += 1;
+                    monthlySummary[monthKey].collection += Number(row["Total Fee"]) || 0;
+                    monthlySummary[monthKey].count += 1;
                 });
 
-                // 3. Prepare data for the UI
+                // 2. Process Expenses
+                rawData.expenses.forEach(row => {
+                    // Extract exact month: "Exp Jan 2026" -> "Jan 2026"
+                    let monthKey = row["SourceTab"].toLowerCase().replace("exp", "").trim(); 
+                    
+                    monthKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+
+                    if(!monthlySummary[monthKey]) monthlySummary[monthKey] = { collection: 0, expense: 0, count: 0 };
+                    
+                    monthlySummary[monthKey].expense += Number(row["Amount"]) || 0;
+                });
+
+                // 3. Render Data
                 let labels = [], collections = [], expenses = [], pnls = [];
                 let totalCol = 0, totalExp = 0, totalPnl = 0;
                 let tableHtml = "";
                 let index = 1;
 
-                for (const [month, data] of Object.entries(monthlySummary)) {
+                for (const [monthKey, data] of Object.entries(monthlySummary)) {
                     let pnl = data.collection - data.expense;
+                    let displayMonth = formatMonthName(monthKey); // e.g., "January 2026"
                     
-                    labels.push(month);
+                    labels.push(displayMonth);
                     collections.push(data.collection);
                     expenses.push(data.expense);
                     pnls.push(pnl);
@@ -189,17 +163,16 @@
                     tableHtml += `
                         <tr>
                             <td>${index++}</td>
-                            <td><strong>${month}</strong></td>
+                            <td><strong>${displayMonth}</strong></td>
                             <td class="currency text-teal">${formatINR(data.collection)}</td>
                             <td class="currency text-orange">${formatINR(data.expense)}</td>
                             <td class="currency ${pnl < 0 ? 'text-red' : 'text-teal'}">${formatINR(pnl)}</td>
                             <td style="text-align: center;">${data.count}</td>
-                            <td><span class="status-pill">Calculated</span></td>
+                            <td><span class="status-pill">Live</span></td>
                         </tr>
                     `;
                 }
 
-                // Add Total row
                 tableHtml += `
                     <tr style="background-color: #f9fafb; font-weight: bold;">
                         <td colspan="2">Total (${index - 1} Months)</td>
@@ -210,47 +183,28 @@
                     </tr>
                 `;
 
-                // Update text elements
                 document.getElementById('tot-collection').innerText = formatINR(totalCol);
                 document.getElementById('tot-expense').innerText = formatINR(totalExp);
                 document.getElementById('tot-pnl').innerText = formatINR(totalPnl);
                 document.getElementById('table-body').innerHTML = tableHtml;
 
-                // Render Charts
                 renderCharts(labels, collections, expenses, pnls);
 
             } catch (error) {
                 console.error("Error loading live data", error);
-                document.getElementById('loading-indicator').innerText = "Error loading data. Please check if your Google Apps Script URL is correct.";
+                document.getElementById('loading-indicator').innerHTML = "<i class='fas fa-exclamation-triangle'></i> Error connecting to Google Sheet API. Please check URL.";
                 document.getElementById('loading-indicator').style.color = "red";
+                document.getElementById('loading-indicator').style.backgroundColor = "#ffebee";
+                document.getElementById('loading-indicator').style.borderColor = "#ffcdd2";
             }
         }
 
         function renderCharts(labels, collections, expenses, pnls) {
             const ctxBar = document.getElementById('barChart').getContext('2d');
-            new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Collection', data: collections, backgroundColor: '#4db6ac', borderRadius: 4 },
-                        { label: 'Expense', data: expenses, backgroundColor: '#ff9800', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
+            new Chart(ctxBar, { type: 'bar', data: { labels: labels, datasets: [ { label: 'Collection', data: collections, backgroundColor: '#4db6ac', borderRadius: 4 }, { label: 'Expense', data: expenses, backgroundColor: '#ff9800', borderRadius: 4 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
 
             const ctxLine = document.getElementById('lineChart').getContext('2d');
-            new Chart(ctxLine, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Net P&L', data: pnls, borderColor: '#2e7d32', backgroundColor: '#2e7d32', borderWidth: 2, pointRadius: 5, tension: 0.3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
+            new Chart(ctxLine, { type: 'line', data: { labels: labels, datasets: [{ label: 'Net P&L', data: pnls, borderColor: '#2e7d32', backgroundColor: '#2e7d32', borderWidth: 2, pointRadius: 5, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
         window.onload = fetchAndRenderData;
