@@ -319,7 +319,10 @@ function renderDashboard(fy){
   for(const[,d]of Object.entries(globalMonthlyData)){
     if(fy!=='All'&&d.fy!==fy)continue;
     const pnl=d.revenue-d.expense;
-    labels.push(d.displayMonth.replace(/(\w+) (\d+)/,'$1 '$2));
+    
+    // TYPO FIXED HERE
+    labels.push(d.displayMonth.replace(/(\w+) (\d+)/,'$1 $2'));
+    
     revs.push(d.revenue);exps.push(d.expense);pnls.push(pnl);
     totalRev+=d.revenue;totalExp+=d.expense;totalPnl+=pnl;
     const pc=pnl>=0?'c-green':'c-red';
