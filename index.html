@@ -91,7 +91,15 @@
   .section{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:24px;overflow:hidden}
   .section-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border)}
   .section-title{font-size:15px;font-weight:600;color:var(--text-1)}
+  
+  /* Filter & Search Controls */
+  .header-controls { display: flex; gap: 12px; align-items: center; }
+  .search-wrapper { position: relative; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 12px; }
+  .search-input { padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-1); outline: none; width: 220px; transition: border-color 0.15s; }
+  .search-input:focus { border-color: var(--accent); }
   .fy-select{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);background:#fff;cursor:pointer;outline:none;}
+  
   .table-wrap{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   thead tr{background:var(--surface-alt)}
@@ -228,7 +236,15 @@
     <div class="section">
       <div class="section-header">
         <div class="section-title" id="exp-month-title">Detailed Expenses</div>
-        <select id="expense-month-filter" class="fy-select" onchange="renderExpenseDetails(this.value)"></select>
+        
+        <div class="header-controls">
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="expense-search" class="search-input" placeholder="Search category..." oninput="renderExpenseDetails(document.getElementById('expense-month-filter').value)">
+            </div>
+            <select id="expense-month-filter" class="fy-select" onchange="renderExpenseDetails(this.value)"></select>
+        </div>
+
       </div>
       <div class="table-wrap">
         <table>
@@ -252,7 +268,7 @@
 const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
 let globalMonthlyData={};
-let globalDetailedExpenses={}; // New object to store detailed expenses by month
+let globalDetailedExpenses={}; 
 let barChartInstance=null;
 let lineChartInstance=null;
 
@@ -270,21 +286,21 @@ const getFY=d=>{
 
 // TAB SWITCHING LOGIC
 function switchTab(tabId) {
-  // Update sidebar UI
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById('nav-' + tabId).classList.add('active');
 
-  // Switch Views
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
   document.getElementById('view-' + tabId).classList.add('active-view');
 
-  // Update Page Title
   if(tabId === 'dashboard') {
       document.getElementById('main-title').innerText = "Accounts Dashboard";
       document.getElementById('main-subtitle').innerText = "Live P&L overview — synced from Google Sheets";
   } else if (tabId === 'expenses') {
       document.getElementById('main-title').innerText = "Monthly Expenses";
       document.getElementById('main-subtitle').innerText = "Detailed category-wise breakdown";
+      // Clear the search bar when tab is switched
+      document.getElementById('expense-search').value = ''; 
+      renderExpenseDetails(document.getElementById('expense-month-filter').value);
   }
 }
 
@@ -295,9 +311,8 @@ async function fetchAndRenderData(){
     const raw=await res.json();
     
     globalMonthlyData={};
-    globalDetailedExpenses={}; // Reset details
+    globalDetailedExpenses={}; 
     
-    // Process Sales/Revenue
     raw.sales.forEach(r=>{
       let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
       k=k.charAt(0).toUpperCase()+k.slice(1);
@@ -306,16 +321,13 @@ async function fetchAndRenderData(){
       globalMonthlyData[k].count+=1;
     });
 
-    // Process Expenses (NOW WITH DETAILS)
     raw.expenses.forEach(r=>{
       let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
       k=k.charAt(0).toUpperCase()+k.slice(1);
       
-      // Add to aggregate P&L Data
       if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
       globalMonthlyData[k].expense+=Number(r["Amount"])||0;
 
-      // Add to Detailed View Data
       let displayMonth = fullMonth(k);
       if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
       globalDetailedExpenses[displayMonth].push({
@@ -336,20 +348,17 @@ async function fetchAndRenderData(){
 
     document.getElementById('loading-indicator').style.display='none';
     
-    // Setup Dashboard FY Dropdown
     const sel=document.getElementById('fy-filter');
     sel.innerHTML='<option value="All">All Financial Years</option>';
     Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
     sel.addEventListener('change',e=>renderDashboard(e.target.value));
     
-    // Setup Expense View Month Dropdown
     const expSel=document.getElementById('expense-month-filter');
     expSel.innerHTML='';
     Array.from(monthsForDropdown).sort().reverse().forEach(m=>{
         expSel.innerHTML+=`<option value="${m}">${m}</option>`;
     });
 
-    // Initial Renders
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
 
@@ -361,28 +370,33 @@ async function fetchAndRenderData(){
   }
 }
 
-// Function to render the new Detailed Expenses Table
+// UPDATED: Now filters the table based on the search input
 function renderExpenseDetails(month) {
     const data = globalDetailedExpenses[month] || [];
+    const searchQuery = document.getElementById('expense-search').value.toLowerCase();
+    
     let html = '';
     let total = 0;
     let i = 1;
 
     data.forEach(item => {
-        html += `<tr>
-            <td style="color:var(--text-3);font-size:12px">${i++}</td>
-            <td style="font-weight:500;color:var(--text-1)">${item.category}</td>
-            <td class="num-cell c-amber">${fmt(item.amount)}</td>
-        </tr>`;
-        total += item.amount;
+        // Only show rows that match the search text (or show all if search is empty)
+        if (item.category.toLowerCase().includes(searchQuery)) {
+            html += `<tr>
+                <td style="color:var(--text-3);font-size:12px">${i++}</td>
+                <td style="font-weight:500;color:var(--text-1)">${item.category}</td>
+                <td class="num-cell c-amber">${fmt(item.amount)}</td>
+            </tr>`;
+            total += item.amount;
+        }
     });
 
     if (i === 1) {
-        html = `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-2)">No detailed expenses found for ${month}</td></tr>`;
+        html = `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-2)">No categories found matching "${searchQuery}"</td></tr>`;
     } else {
         html += `<tr class="total-row">
             <td></td>
-            <td>Total Expenses for ${month}</td>
+            <td>Total ${searchQuery ? 'Filtered' : 'Expenses'} for ${month}</td>
             <td class="num-cell c-amber">${fmt(total)}</td>
         </tr>`;
     }
