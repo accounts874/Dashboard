@@ -172,7 +172,7 @@
         <div class="metric-icon"><i class="fas fa-arrow-trend-up"></i></div>
         <div class="metric-label">Total Revenue</div>
         <div class="metric-value" id="tot-revenue">₹0</div>
-        <div class="metric-hint">Sum of Total Fees across all sales tabs</div>
+        <div class="metric-hint">Sum of Total Fees & Other Sales</div>
         <i class="fas fa-arrow-trend-up metric-bg-icon"></i>
       </div>
       <div class="metric-card mc-amber">
@@ -298,7 +298,6 @@ function switchTab(tabId) {
   } else if (tabId === 'expenses') {
       document.getElementById('main-title').innerText = "Monthly Expenses";
       document.getElementById('main-subtitle').innerText = "Detailed category-wise breakdown";
-      // Clear the search bar when tab is switched
       document.getElementById('expense-search').value = ''; 
       renderExpenseDetails(document.getElementById('expense-month-filter').value);
   }
@@ -313,28 +312,55 @@ async function fetchAndRenderData(){
     globalMonthlyData={};
     globalDetailedExpenses={}; 
     
-    raw.sales.forEach(r=>{
-      let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
-      k=k.charAt(0).toUpperCase()+k.slice(1);
-      if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
-      globalMonthlyData[k].revenue+=Number(r["Total Fee"])||0;
-      globalMonthlyData[k].count+=1;
-    });
+    // Process Regular Sales (Total Fees)
+    if(raw.sales) {
+        raw.sales.forEach(r=>{
+          let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
+          k=k.charAt(0).toUpperCase()+k.slice(1);
+          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
+          globalMonthlyData[k].revenue+=Number(r["Total Fee"])||0;
+          globalMonthlyData[k].count+=1;
+        });
+    }
 
-    raw.expenses.forEach(r=>{
-      let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
-      k=k.charAt(0).toUpperCase()+k.slice(1);
-      
-      if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
-      globalMonthlyData[k].expense+=Number(r["Amount"])||0;
+    // Process Other Sales (Extensions, Workshops, Activation)
+    if(raw.otherSales) {
+        raw.otherSales.forEach(r => {
+            if(!r["Month"]) return; // Skip empty rows
+            
+            // Format to match main keys e.g., "Jan 2026 sales" -> "Jan 2026"
+            let k = String(r["Month"]).toLowerCase().replace("sales", "").trim();
+            k = k.charAt(0).toUpperCase() + k.slice(1);
 
-      let displayMonth = fullMonth(k);
-      if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
-      globalDetailedExpenses[displayMonth].push({
-          category: r["Category"] || "Uncategorized",
-          amount: Number(r["Amount"]) || 0
-      });
-    });
+            if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0,count:0};
+
+            // Grab the values
+            let ext = Number(r["Extension"]) || 0;
+            let work = Number(r["Workshop"]) || 0;
+            let act = Number(r["Activation"]) || 0;
+
+            // Add these directly to the revenue sum
+            globalMonthlyData[k].revenue += (ext + work + act);
+        });
+    }
+
+    // Process Expenses
+    if(raw.expenses) {
+        raw.expenses.forEach(r=>{
+          let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
+          k=k.charAt(0).toUpperCase()+k.slice(1);
+          
+          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
+          globalMonthlyData[k].expense+=Number(r["Amount"])||0;
+
+          let displayMonth = fullMonth(k);
+          if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
+          globalDetailedExpenses[displayMonth].push({
+              category: r["Category"] || "Uncategorized",
+              amount: Number(r["Amount"]) || 0
+          });
+        });
+    }
 
     const fys=new Set();
     const monthsForDropdown = new Set();
@@ -370,7 +396,6 @@ async function fetchAndRenderData(){
   }
 }
 
-// UPDATED: Now filters the table based on the search input
 function renderExpenseDetails(month) {
     const data = globalDetailedExpenses[month] || [];
     const searchQuery = document.getElementById('expense-search').value.toLowerCase();
@@ -380,7 +405,6 @@ function renderExpenseDetails(month) {
     let i = 1;
 
     data.forEach(item => {
-        // Only show rows that match the search text (or show all if search is empty)
         if (item.category.toLowerCase().includes(searchQuery)) {
             html += `<tr>
                 <td style="color:var(--text-3);font-size:12px">${i++}</td>
