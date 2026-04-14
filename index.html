@@ -140,7 +140,7 @@
     <div class="nav-label">Main Menu</div>
     <a class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a class="nav-item" id="nav-expenses" onclick="switchTab('expenses')"><i class="fas fa-file-invoice-dollar"></i> Monthly Expense</a>
-    <a class="nav-item" id="nav-revenue"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
+    <a class="nav-item" id="nav-revenue" onclick="switchTab('revenue')"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
     <a class="nav-item" id="nav-pnl"><i class="fas fa-chart-pie"></i> Monthly P&amp;L</a>
   </nav>
   <div class="sidebar-footer">
@@ -236,7 +236,6 @@
     <div class="section">
       <div class="section-header">
         <div class="section-title" id="exp-month-title">Detailed Expenses</div>
-        
         <div class="header-controls">
             <div class="search-wrapper">
                 <i class="fas fa-search search-icon"></i>
@@ -244,7 +243,6 @@
             </div>
             <select id="expense-month-filter" class="fy-select" onchange="renderExpenseDetails(this.value)"></select>
         </div>
-
       </div>
       <div class="table-wrap">
         <table>
@@ -261,6 +259,33 @@
     </div>
   </div>
 
+  <div id="view-revenue" class="view-section">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title" id="rev-month-title">Detailed Revenue</div>
+        <div class="header-controls">
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="revenue-search" class="search-input" placeholder="Search program..." oninput="renderRevenueDetails(document.getElementById('revenue-month-filter').value)">
+            </div>
+            <select id="revenue-month-filter" class="fy-select" onchange="renderRevenueDetails(this.value)"></select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Program / Category</th>
+              <th style="text-align:right">Revenue (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="revenue-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -269,6 +294,8 @@ const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9
 
 let globalMonthlyData={};
 let globalDetailedExpenses={}; 
+let globalDetailedRevenue={}; // New object to store detailed revenue by program
+
 let barChartInstance=null;
 let lineChartInstance=null;
 
@@ -300,6 +327,11 @@ function switchTab(tabId) {
       document.getElementById('main-subtitle').innerText = "Detailed category-wise breakdown";
       document.getElementById('expense-search').value = ''; 
       renderExpenseDetails(document.getElementById('expense-month-filter').value);
+  } else if (tabId === 'revenue') {
+      document.getElementById('main-title').innerText = "Monthly Revenue";
+      document.getElementById('main-subtitle').innerText = "Program & Category-wise breakdown";
+      document.getElementById('revenue-search').value = ''; 
+      renderRevenueDetails(document.getElementById('revenue-month-filter').value);
   }
 }
 
@@ -311,36 +343,63 @@ async function fetchAndRenderData(){
     
     globalMonthlyData={};
     globalDetailedExpenses={}; 
+    globalDetailedRevenue={}; 
     
-    // Process Regular Sales (Total Fees)
+    // Process Regular Sales (Programs)
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
           k=k.charAt(0).toUpperCase()+k.slice(1);
+          let displayMonth = fullMonth(k);
+
           if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
-          globalMonthlyData[k].revenue+=Number(r["Total Fee"])||0;
+          let fee = Number(r["Total Fee"])||0;
+          let program = r["Selected Program"] || "Unspecified Program";
+
+          // Add to Dashboard Overview
+          globalMonthlyData[k].revenue+=fee;
           globalMonthlyData[k].count+=1;
+
+          // Add to Detailed Revenue
+          if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
+          if(!globalDetailedRevenue[displayMonth][program]) globalDetailedRevenue[displayMonth][program] = 0;
+          globalDetailedRevenue[displayMonth][program] += fee;
         });
     }
 
     // Process Other Sales (Extensions, Workshops, Activation)
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
-            if(!r["Month"]) return; // Skip empty rows
+            if(!r["Month"]) return;
             
-            // Format to match main keys e.g., "Jan 2026 sales" -> "Jan 2026"
             let k = String(r["Month"]).toLowerCase().replace("sales", "").trim();
             k = k.charAt(0).toUpperCase() + k.slice(1);
+            let displayMonth = fullMonth(k);
 
             if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0,count:0};
 
-            // Grab the values
             let ext = Number(r["Extension"]) || 0;
             let work = Number(r["Workshop"]) || 0;
             let act = Number(r["Activation"]) || 0;
 
-            // Add these directly to the revenue sum
+            // Add to Dashboard Overview
             globalMonthlyData[k].revenue += (ext + work + act);
+
+            // Add to Detailed Revenue View as specific categories
+            if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
+            
+            if(ext > 0) {
+                if(!globalDetailedRevenue[displayMonth]["Extension"]) globalDetailedRevenue[displayMonth]["Extension"] = 0;
+                globalDetailedRevenue[displayMonth]["Extension"] += ext;
+            }
+            if(work > 0) {
+                if(!globalDetailedRevenue[displayMonth]["Workshop"]) globalDetailedRevenue[displayMonth]["Workshop"] = 0;
+                globalDetailedRevenue[displayMonth]["Workshop"] += work;
+            }
+            if(act > 0) {
+                if(!globalDetailedRevenue[displayMonth]["Activation"]) globalDetailedRevenue[displayMonth]["Activation"] = 0;
+                globalDetailedRevenue[displayMonth]["Activation"] += act;
+            }
         });
     }
 
@@ -349,11 +408,11 @@ async function fetchAndRenderData(){
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
           k=k.charAt(0).toUpperCase()+k.slice(1);
+          let displayMonth = fullMonth(k);
           
           if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
           globalMonthlyData[k].expense+=Number(r["Amount"])||0;
 
-          let displayMonth = fullMonth(k);
           if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
           globalDetailedExpenses[displayMonth].push({
               category: r["Category"] || "Uncategorized",
@@ -374,19 +433,26 @@ async function fetchAndRenderData(){
 
     document.getElementById('loading-indicator').style.display='none';
     
+    // Setup Filters
     const sel=document.getElementById('fy-filter');
     sel.innerHTML='<option value="All">All Financial Years</option>';
     Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
     sel.addEventListener('change',e=>renderDashboard(e.target.value));
     
     const expSel=document.getElementById('expense-month-filter');
+    const revSel=document.getElementById('revenue-month-filter');
     expSel.innerHTML='';
+    revSel.innerHTML='';
+    
     Array.from(monthsForDropdown).sort().reverse().forEach(m=>{
         expSel.innerHTML+=`<option value="${m}">${m}</option>`;
+        revSel.innerHTML+=`<option value="${m}">${m}</option>`;
     });
 
+    // Render Initial Data
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
+    if(revSel.value) renderRevenueDetails(revSel.value);
 
   }catch(e){
     console.error(e);
@@ -396,7 +462,52 @@ async function fetchAndRenderData(){
   }
 }
 
+// Render Monthly Revenue Details
+function renderRevenueDetails(month) {
+    if(!month) return;
+    const dataObj = globalDetailedRevenue[month] || {};
+    const searchQuery = document.getElementById('revenue-search').value.toLowerCase();
+    
+    // Convert object { "Program A": 500, "Workshop": 200 } into an array to render
+    let dataArray = Object.keys(dataObj).map(key => {
+        return { program: key, amount: dataObj[key] };
+    });
+
+    // Sort by highest revenue first
+    dataArray.sort((a, b) => b.amount - a.amount);
+
+    let html = '';
+    let total = 0;
+    let i = 1;
+
+    dataArray.forEach(item => {
+        if (item.program.toLowerCase().includes(searchQuery)) {
+            html += `<tr>
+                <td style="color:var(--text-3);font-size:12px">${i++}</td>
+                <td style="font-weight:500;color:var(--text-1)">${item.program}</td>
+                <td class="num-cell c-teal">${fmt(item.amount)}</td>
+            </tr>`;
+            total += item.amount;
+        }
+    });
+
+    if (i === 1) {
+        html = `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-2)">No programs found matching "${searchQuery}"</td></tr>`;
+    } else {
+        html += `<tr class="total-row">
+            <td></td>
+            <td>Total ${searchQuery ? 'Filtered' : 'Revenue'} for ${month}</td>
+            <td class="num-cell c-teal">${fmt(total)}</td>
+        </tr>`;
+    }
+
+    document.getElementById('revenue-table-body').innerHTML = html;
+    document.getElementById('rev-month-title').innerText = `Detailed Breakdown — ${month}`;
+}
+
+// Render Monthly Expense Details
 function renderExpenseDetails(month) {
+    if(!month) return;
     const data = globalDetailedExpenses[month] || [];
     const searchQuery = document.getElementById('expense-search').value.toLowerCase();
     
@@ -429,6 +540,7 @@ function renderExpenseDetails(month) {
     document.getElementById('exp-month-title').innerText = `Detailed Breakdown — ${month}`;
 }
 
+// Render Main Dashboard
 function renderDashboard(fy){
   let labels=[],revs=[],exps=[],pnls=[],totalRev=0,totalExp=0,totalPnl=0,html="",i=1;
   for(const[,d]of Object.entries(globalMonthlyData)){
