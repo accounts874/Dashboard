@@ -294,7 +294,7 @@ const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9
 
 let globalMonthlyData={};
 let globalDetailedExpenses={}; 
-let globalDetailedRevenue={}; // New object to store detailed revenue by program
+let globalDetailedRevenue={}; 
 
 let barChartInstance=null;
 let lineChartInstance=null;
@@ -309,6 +309,14 @@ const getFY=d=>{
   const p=d.split(" "),mo=p[0],yr=parseInt(p[1]);
   const fyMos=["April","May","June","July","August","September","October","November","December"];
   return fyMos.includes(mo)?`FY ${yr}-${(yr+1).toString().slice(-2)}`:`FY ${yr-1}-${yr.toString().slice(-2)}`;
+};
+
+// NEW CLEANUP FUNCTION: Fixes spaces & converts to UPPERCASE for aggregation
+const cleanProgramName = (name) => {
+    if (!name) return "UNSPECIFIED PROGRAM";
+    let clean = String(name).trim().replace(/\s+/g, ' ').toUpperCase();
+    if (clean === "") return "UNSPECIFIED PROGRAM";
+    return clean;
 };
 
 // TAB SWITCHING LOGIC
@@ -354,7 +362,9 @@ async function fetchAndRenderData(){
 
           if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
           let fee = Number(r["Total Fee"])||0;
-          let program = r["Selected Program"] || "Unspecified Program";
+          
+          // CLEANUP: Merge duplicate names like "Basic PROGRAMME" and "BASIC PROGRAMME"
+          let program = cleanProgramName(r["Selected Program"]);
 
           // Add to Dashboard Overview
           globalMonthlyData[k].revenue+=fee;
@@ -385,20 +395,20 @@ async function fetchAndRenderData(){
             // Add to Dashboard Overview
             globalMonthlyData[k].revenue += (ext + work + act);
 
-            // Add to Detailed Revenue View as specific categories
+            // Add to Detailed Revenue View as UPPERCASE specific categories
             if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
             
             if(ext > 0) {
-                if(!globalDetailedRevenue[displayMonth]["Extension"]) globalDetailedRevenue[displayMonth]["Extension"] = 0;
-                globalDetailedRevenue[displayMonth]["Extension"] += ext;
+                if(!globalDetailedRevenue[displayMonth]["EXTENSION"]) globalDetailedRevenue[displayMonth]["EXTENSION"] = 0;
+                globalDetailedRevenue[displayMonth]["EXTENSION"] += ext;
             }
             if(work > 0) {
-                if(!globalDetailedRevenue[displayMonth]["Workshop"]) globalDetailedRevenue[displayMonth]["Workshop"] = 0;
-                globalDetailedRevenue[displayMonth]["Workshop"] += work;
+                if(!globalDetailedRevenue[displayMonth]["WORKSHOP"]) globalDetailedRevenue[displayMonth]["WORKSHOP"] = 0;
+                globalDetailedRevenue[displayMonth]["WORKSHOP"] += work;
             }
             if(act > 0) {
-                if(!globalDetailedRevenue[displayMonth]["Activation"]) globalDetailedRevenue[displayMonth]["Activation"] = 0;
-                globalDetailedRevenue[displayMonth]["Activation"] += act;
+                if(!globalDetailedRevenue[displayMonth]["ACTIVATION"]) globalDetailedRevenue[displayMonth]["ACTIVATION"] = 0;
+                globalDetailedRevenue[displayMonth]["ACTIVATION"] += act;
             }
         });
     }
@@ -468,7 +478,7 @@ function renderRevenueDetails(month) {
     const dataObj = globalDetailedRevenue[month] || {};
     const searchQuery = document.getElementById('revenue-search').value.toLowerCase();
     
-    // Convert object { "Program A": 500, "Workshop": 200 } into an array to render
+    // Convert object to array
     let dataArray = Object.keys(dataObj).map(key => {
         return { program: key, amount: dataObj[key] };
     });
