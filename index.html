@@ -214,8 +214,10 @@
 </main>
 
 <script>
-// YAHAN APNA APPS SCRIPT URL DAALIYE
-const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
+// ==========================================
+// PASTE YOUR GOOGLE APPS SCRIPT URL HERE
+// ==========================================
+const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
 let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}; 
 // Chart Instances
@@ -274,6 +276,11 @@ async function fetchAndRenderData(){
   const loader = document.getElementById('loading-indicator');
   loader.style.display='flex';
   loader.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Fetching live data...`;
+  
+  // Reset inline styles incase error was shown previously
+  loader.style.background="linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft))";
+  loader.style.color="var(--amber)";
+  loader.style.border="1px solid #fed7aa";
 
   try{
     const res=await fetch(apiUrl);
@@ -287,13 +294,15 @@ async function fetchAndRenderData(){
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
           k=k.charAt(0).toUpperCase()+k.slice(1);
-          let displayMonth = fullMonth(k);
+          let displayMonth = fullMonth(k); // E.g., "January 2026"
 
-          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0};
+          // FIX: Strictly map by Display Month to prevent key mismatch
+          if(!globalMonthlyData[displayMonth]) globalMonthlyData[displayMonth]={revenue:0, expense:0, displayMonth: displayMonth, fy: getFY(displayMonth)};
+          
           let fee = parseAmt(r["Total Fee"]);
           let program = cleanProgramName(r["Selected Program"]);
 
-          globalMonthlyData[k].revenue+=fee;
+          globalMonthlyData[displayMonth].revenue += fee;
           
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           if(!globalDetailedRevenue[displayMonth][program]) globalDetailedRevenue[displayMonth][program] = 0;
@@ -308,10 +317,10 @@ async function fetchAndRenderData(){
             k = k.charAt(0).toUpperCase() + k.slice(1);
             let displayMonth = fullMonth(k);
 
-            if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0};
+            if(!globalMonthlyData[displayMonth]) globalMonthlyData[displayMonth]={revenue:0, expense:0, displayMonth: displayMonth, fy: getFY(displayMonth)};
 
             let ext = parseAmt(r["Extension"]), work = parseAmt(r["Workshop"]), act = parseAmt(r["Activation"]);
-            globalMonthlyData[k].revenue += (ext + work + act);
+            globalMonthlyData[displayMonth].revenue += (ext + work + act);
 
             if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
             if(ext > 0) { globalDetailedRevenue[displayMonth]["EXTENSION"] = (globalDetailedRevenue[displayMonth]["EXTENSION"]||0) + ext; }
@@ -326,8 +335,8 @@ async function fetchAndRenderData(){
           k=k.charAt(0).toUpperCase()+k.slice(1);
           let displayMonth = fullMonth(k);
           
-          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0};
-          globalMonthlyData[k].expense+=parseAmt(r["Amount"]);
+          if(!globalMonthlyData[displayMonth]) globalMonthlyData[displayMonth]={revenue:0, expense:0, displayMonth: displayMonth, fy: getFY(displayMonth)};
+          globalMonthlyData[displayMonth].expense += parseAmt(r["Amount"]);
 
           if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
           globalDetailedExpenses[displayMonth].push({ category: r["Category"], amount: parseAmt(r["Amount"]) });
@@ -366,7 +375,6 @@ async function fetchAndRenderData(){
 
     const fys=new Set(), monthsForDropdown = new Set(), dayPnlMonths = new Set();
     for(const[k,d]of Object.entries(globalMonthlyData)){
-      d.displayMonth=fullMonth(k); d.fy=getFY(d.displayMonth);
       fys.add(d.fy); monthsForDropdown.add(d.displayMonth);
     }
     for(const key of Object.keys(globalDayToDayPnl)) { dayPnlMonths.add(key); }
@@ -383,23 +391,27 @@ async function fetchAndRenderData(){
     const pnlSel=document.getElementById('pnl-month-filter'); pnlSel.innerHTML='';
     Array.from(dayPnlMonths).sort().reverse().forEach(m=>{ pnlSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
+    // Render Data
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
     if(pnlSel.value) renderDayToDayPnl(pnlSel.value);
 
   }catch(e){
-    console.error(e);
-    loader.innerHTML=`<i class='fas fa-exclamation-triangle'></i> Error: ${e.message}`;
-    loader.style.background="#fef2f2"; loader.style.color="#dc2626";
+    console.error("Full Error:", e);
+    // Explicitly make the loader visible to show the error
+    loader.style.display = 'flex';
+    loader.innerHTML=`<i class='fas fa-exclamation-triangle'></i> Data Sync Failed. Please check if Apps Script URL is correct. Error: ${e.message}`;
+    loader.style.background="#fef2f2"; loader.style.color="#dc2626"; loader.style.border="1px solid #fecaca";
   }
 }
 
 function getSortedMonthTrendData() {
-    let arr = [];
-    for(const [k,d] of Object.entries(globalMonthlyData)) {
-        arr.push({ label: d.displayMonth, short: d.displayMonth.split(" ")[0].slice(0,3) + " " + d.displayMonth.split(" ")[1], rev: d.revenue, exp: d.expense, dateObj: new Date(k) });
-    }
+    let arr = Object.values(globalMonthlyData).map(d => {
+        let dateObj = new Date(d.displayMonth); 
+        let short = d.displayMonth.split(" ")[0].slice(0,3) + " " + d.displayMonth.split(" ")[1]; 
+        return { label: d.displayMonth, short: short, rev: d.revenue, exp: d.expense, dateObj: dateObj };
+    });
     return arr.sort((a,b) => a.dateObj - b.dateObj);
 }
 
@@ -483,6 +495,7 @@ function renderRevenueDetails(month) {
 
     if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No programs found</td></tr>`; } 
     else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-teal">${fmt(total)}</td></tr>`; }
+    
     document.getElementById('revenue-table-body').innerHTML = html;
     document.getElementById('rev-month-title').innerText = `Detailed Breakdown — ${month}`;
     document.getElementById('rev-pie-title').innerText = `Revenue Breakdown — ${month}`;
@@ -508,7 +521,7 @@ function renderExpenseDetails(month) {
     const data = globalDetailedExpenses[month] || [], searchQuery = document.getElementById('expense-search').value.toLowerCase();
     
     let html = '', total = 0, i = 1;
-    let pieMap = {}; // Aggregate categories for pie chart if there are multiple
+    let pieMap = {}; 
 
     data.forEach(item => {
         if (item.category.toLowerCase().includes(searchQuery)) {
@@ -520,6 +533,7 @@ function renderExpenseDetails(month) {
 
     if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No categories found</td></tr>`; } 
     else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-amber">${fmt(total)}</td></tr>`; }
+    
     document.getElementById('expense-table-body').innerHTML = html;
     document.getElementById('exp-month-title').innerText = `Detailed Breakdown — ${month}`;
     document.getElementById('exp-pie-title').innerText = `Expense Breakdown — ${month}`;
@@ -545,7 +559,9 @@ function renderDashboard(fy){
   let trendData = getSortedMonthTrendData();
 
   trendData.forEach(t => {
-    if(fy!=='All' && globalMonthlyData[t.label].fy !== fy) return;
+    let d = globalMonthlyData[t.label]; 
+    if(fy !== 'All' && d.fy !== fy) return;
+    
     const pnl = t.rev - t.exp;
     labels.push(t.short); revs.push(t.rev); exps.push(t.exp); pnls.push(pnl);
     totalRev+=t.rev; totalExp+=t.exp; totalPnl+=pnl;
@@ -553,14 +569,14 @@ function renderDashboard(fy){
     let colorClass = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     html+=`<tr>
       <td>${i++}</td>
-      <td><span style="font-weight:600;color:var(--text-1)">${t.label}</span><span class="fy-pill">${globalMonthlyData[t.label].fy}</span></td>
+      <td><span style="font-weight:600;color:var(--text-1)">${t.label}</span><span class="fy-pill">${d.fy}</span></td>
       <td class="num-cell c-teal">${fmt(t.rev)}</td>
       <td class="num-cell c-amber">${fmt(t.exp)}</td>
       <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnl>=0?'+':''}${fmt(pnl)}</td>
     </tr>`;
   });
 
-  if(i===1){ html=`<tr><td colspan="5" style="text-align:center;padding:32px;">No data</td></tr>`; } 
+  if(i===1){ html=`<tr><td colspan="5" style="text-align:center;padding:32px;">No data available</td></tr>`; } 
   else { 
       let tColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
       html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td></tr>`; 
