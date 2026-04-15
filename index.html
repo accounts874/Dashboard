@@ -98,6 +98,7 @@
     <a class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a class="nav-item" id="nav-expenses" onclick="switchTab('expenses')"><i class="fas fa-file-invoice-dollar"></i> Monthly Expense</a>
     <a class="nav-item" id="nav-revenue" onclick="switchTab('revenue')"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
+    <a class="nav-item" id="nav-sales" onclick="switchTab('sales')"><i class="fas fa-bullseye"></i> Sales Data</a>
     <a class="nav-item" id="nav-pnl" onclick="switchTab('pnl')"><i class="fas fa-chart-pie"></i> Day-Day P&amp;L</a>
   </nav>
 </aside>
@@ -187,6 +188,33 @@
     </div>
   </div>
 
+  <div id="view-sales" class="view-section">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Month-wise Sales Status</div>
+        <select id="sales-fy-filter" class="fy-select" onchange="renderSalesData(this.value)"></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th style="text-align:right">Total Rev</th>
+              <th style="text-align:center">Total Cnt</th>
+              <th style="text-align:right; color:var(--green)">Done Rev</th>
+              <th style="text-align:center; color:var(--green)">Done Cnt</th>
+              <th style="text-align:right; color:var(--amber)">U/P Rev (Pend)</th>
+              <th style="text-align:center; color:var(--amber)">U/P Cnt</th>
+              <th style="text-align:right; color:var(--red)">Drop Rev (Pend)</th>
+              <th style="text-align:center; color:var(--red)">Drop Cnt</th>
+            </tr>
+          </thead>
+          <tbody id="sales-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div id="view-pnl" class="view-section">
     <div class="charts-grid">
       <div class="chart-card"><div class="chart-title" id="daily-bar-title">Daily Rev vs Exp</div><div class="chart-wrap"><canvas id="dailyBarChart"></canvas></div></div>
@@ -219,7 +247,7 @@
 // ==========================================
 const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
-let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}; 
+let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}, globalSalesData={}; 
 // Chart Instances
 let barChartInst=null, lineChartInst=null;
 let expPieInst=null, expTrendInst=null;
@@ -262,10 +290,16 @@ function switchTab(tabId) {
       renderDashboard(document.getElementById('fy-filter').value || 'All');
   } else if (tabId === 'expenses') {
       document.getElementById('main-title').innerText = "Monthly Expenses";
+      document.getElementById('expense-search').value = ''; 
       renderExpenseDetails(document.getElementById('expense-month-filter').value);
   } else if (tabId === 'revenue') {
       document.getElementById('main-title').innerText = "Monthly Revenue";
+      document.getElementById('revenue-search').value = ''; 
       renderRevenueDetails(document.getElementById('revenue-month-filter').value);
+  } else if (tabId === 'sales') {
+      document.getElementById('main-title').innerText = "Sales Data";
+      document.getElementById('main-subtitle').innerText = "Month-wise status breakdown";
+      renderSalesData(document.getElementById('sales-fy-filter').value || 'All');
   } else if (tabId === 'pnl') {
       document.getElementById('main-title').innerText = "Day-to-Day P&L";
       renderDayToDayPnl(document.getElementById('pnl-month-filter').value);
@@ -276,8 +310,6 @@ async function fetchAndRenderData(){
   const loader = document.getElementById('loading-indicator');
   loader.style.display='flex';
   loader.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Fetching live data...`;
-  
-  // Reset inline styles incase error was shown previously
   loader.style.background="linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft))";
   loader.style.color="var(--amber)";
   loader.style.border="1px solid #fed7aa";
@@ -288,25 +320,48 @@ async function fetchAndRenderData(){
     const raw = await res.json();
     if (raw.status === "error") throw new Error("Apps Script Error: " + raw.message);
     
-    globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; 
+    globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; globalSalesData={};
     
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
           k=k.charAt(0).toUpperCase()+k.slice(1);
-          let displayMonth = fullMonth(k); // E.g., "January 2026"
+          let displayMonth = fullMonth(k);
 
-          // FIX: Strictly map by Display Month to prevent key mismatch
           if(!globalMonthlyData[displayMonth]) globalMonthlyData[displayMonth]={revenue:0, expense:0, displayMonth: displayMonth, fy: getFY(displayMonth)};
           
           let fee = parseAmt(r["Total Fee"]);
+          let amtPending = parseAmt(r["Amount Pending"] || r["Pending Amount"] || r["Pending"] || 0);
           let program = cleanProgramName(r["Selected Program"]);
+          let status = String(r["Status"] || "").trim().toLowerCase();
 
+          // Add to Dashboard Overview
           globalMonthlyData[displayMonth].revenue += fee;
           
+          // Add to Detailed Revenue
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           if(!globalDetailedRevenue[displayMonth][program]) globalDetailedRevenue[displayMonth][program] = 0;
           globalDetailedRevenue[displayMonth][program] += fee;
+
+          // Add to SALES DATA overview
+          if(!globalSalesData[displayMonth]) {
+              globalSalesData[displayMonth] = { fy: getFY(displayMonth), displayMonth: displayMonth, dateObj: new Date(displayMonth), totalRev: 0, totalCount: 0, doneRev: 0, doneCount: 0, dropoutRev: 0, dropoutCount: 0, underProcessRev: 0, underProcessCount: 0 };
+          }
+          
+          globalSalesData[displayMonth].totalRev += fee;
+          globalSalesData[displayMonth].totalCount += 1;
+
+          if (status.includes("done")) {
+              globalSalesData[displayMonth].doneCount += 1;
+              globalSalesData[displayMonth].doneRev += fee; // Using fee for Done
+          } else if (status.includes("dropout")) {
+              globalSalesData[displayMonth].dropoutCount += 1;
+              globalSalesData[displayMonth].dropoutRev += amtPending; // Using pending for Dropout
+          } else if (status.includes("under process") || status.includes("underprocess")) {
+              globalSalesData[displayMonth].underProcessCount += 1;
+              globalSalesData[displayMonth].underProcessRev += amtPending; // Using pending for Under process
+          }
+
         });
     }
 
@@ -320,12 +375,22 @@ async function fetchAndRenderData(){
             if(!globalMonthlyData[displayMonth]) globalMonthlyData[displayMonth]={revenue:0, expense:0, displayMonth: displayMonth, fy: getFY(displayMonth)};
 
             let ext = parseAmt(r["Extension"]), work = parseAmt(r["Workshop"]), act = parseAmt(r["Activation"]);
-            globalMonthlyData[displayMonth].revenue += (ext + work + act);
+            let totalOther = ext + work + act;
+            
+            globalMonthlyData[displayMonth].revenue += totalOther;
 
             if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
             if(ext > 0) { globalDetailedRevenue[displayMonth]["EXTENSION"] = (globalDetailedRevenue[displayMonth]["EXTENSION"]||0) + ext; }
             if(work > 0) { globalDetailedRevenue[displayMonth]["WORKSHOP"] = (globalDetailedRevenue[displayMonth]["WORKSHOP"]||0) + work; }
             if(act > 0) { globalDetailedRevenue[displayMonth]["ACTIVATION"] = (globalDetailedRevenue[displayMonth]["ACTIVATION"]||0) + act; }
+
+            // Optional: Include Other Sales in Sales Data View as Done/Total Revenue
+            if(totalOther > 0) {
+                if(!globalSalesData[displayMonth]) globalSalesData[displayMonth] = { fy: getFY(displayMonth), displayMonth: displayMonth, dateObj: new Date(displayMonth), totalRev: 0, totalCount: 0, doneRev: 0, doneCount: 0, dropoutRev: 0, dropoutCount: 0, underProcessRev: 0, underProcessCount: 0 };
+                globalSalesData[displayMonth].totalRev += totalOther;
+                globalSalesData[displayMonth].doneRev += totalOther;
+                // Count not added for other sales to prevent skewing student counts
+            }
         });
     }
 
@@ -381,8 +446,13 @@ async function fetchAndRenderData(){
 
     loader.style.display='none';
     
-    const sel=document.getElementById('fy-filter'); sel.innerHTML='<option value="All">All Financial Years</option>';
-    Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
+    const sel=document.getElementById('fy-filter'), salesSel=document.getElementById('sales-fy-filter');
+    sel.innerHTML='<option value="All">All Financial Years</option>';
+    salesSel.innerHTML='<option value="All">All Financial Years</option>';
+    Array.from(fys).sort().reverse().forEach(f=>{
+        sel.innerHTML+=`<option value="${f}">${f}</option>`;
+        salesSel.innerHTML+=`<option value="${f}">${f}</option>`;
+    });
     
     const expSel=document.getElementById('expense-month-filter'), revSel=document.getElementById('revenue-month-filter');
     expSel.innerHTML=''; revSel.innerHTML='';
@@ -391,17 +461,16 @@ async function fetchAndRenderData(){
     const pnlSel=document.getElementById('pnl-month-filter'); pnlSel.innerHTML='';
     Array.from(dayPnlMonths).sort().reverse().forEach(m=>{ pnlSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
-    // Render Data
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
     if(pnlSel.value) renderDayToDayPnl(pnlSel.value);
+    renderSalesData('All');
 
   }catch(e){
     console.error("Full Error:", e);
-    // Explicitly make the loader visible to show the error
     loader.style.display = 'flex';
-    loader.innerHTML=`<i class='fas fa-exclamation-triangle'></i> Data Sync Failed. Please check if Apps Script URL is correct. Error: ${e.message}`;
+    loader.innerHTML=`<i class='fas fa-exclamation-triangle'></i> Error: ${e.message}`;
     loader.style.background="#fef2f2"; loader.style.color="#dc2626"; loader.style.border="1px solid #fecaca";
   }
 }
@@ -415,15 +484,57 @@ function getSortedMonthTrendData() {
     return arr.sort((a,b) => a.dateObj - b.dateObj);
 }
 
-// RENDERING DAY-TO-DAY
+// RENDERING SALES DATA (NEW TAB)
+function renderSalesData(fy) {
+    let html = '', totalRev = 0, totalCount = 0, doneRev = 0, doneCount = 0, upRev = 0, upCount = 0, dropRev = 0, dropCount = 0;
+
+    let sortedMonths = Object.values(globalSalesData).sort((a, b) => a.dateObj - b.dateObj);
+
+    sortedMonths.forEach(d => {
+        if(fy !== 'All' && d.fy !== fy) return;
+
+        html += `<tr>
+            <td style="font-weight:600;color:var(--text-1)">${d.displayMonth}</td>
+            <td class="num-cell c-teal">${fmt(d.totalRev)}</td>
+            <td class="center-cell">${d.totalCount}</td>
+            <td class="num-cell c-green">${fmt(d.doneRev)}</td>
+            <td class="center-cell c-green">${d.doneCount}</td>
+            <td class="num-cell c-amber">${fmt(d.underProcessRev)}</td>
+            <td class="center-cell c-amber">${d.underProcessCount}</td>
+            <td class="num-cell c-red">${fmt(d.dropoutRev)}</td>
+            <td class="center-cell c-red">${d.dropoutCount}</td>
+        </tr>`;
+
+        totalRev += d.totalRev; totalCount += d.totalCount;
+        doneRev += d.doneRev; doneCount += d.doneCount;
+        upRev += d.underProcessRev; upCount += d.underProcessCount;
+        dropRev += d.dropoutRev; dropCount += d.dropoutCount;
+    });
+
+    if (html === '') {
+        html = `<tr><td colspan="9" style="text-align:center;padding:32px;">No sales data found</td></tr>`;
+    } else {
+        html += `<tr class="total-row">
+            <td>Total</td>
+            <td class="num-cell c-teal">${fmt(totalRev)}</td>
+            <td class="center-cell">${totalCount}</td>
+            <td class="num-cell c-green">${fmt(doneRev)}</td>
+            <td class="center-cell c-green">${doneCount}</td>
+            <td class="num-cell c-amber">${fmt(upRev)}</td>
+            <td class="center-cell c-amber">${upCount}</td>
+            <td class="num-cell c-red">${fmt(dropRev)}</td>
+            <td class="center-cell c-red">${dropCount}</td>
+        </tr>`;
+    }
+    document.getElementById('sales-table-body').innerHTML = html;
+}
+
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
-    let html = '', i = 1;
-    let dailyAgg = {};
-
+    let html = '', i = 1, dailyAgg = {};
     dataArray.forEach(item => {
         let debitHtml = item.debit > 0 ? `<span class="c-red" style="font-weight:600;">${fmt(item.debit)}</span>` : '—';
         let creditHtml = item.credit > 0 ? `<span class="c-teal" style="font-weight:600;">${fmt(item.credit)}</span>` : '—';
@@ -443,7 +554,6 @@ function renderDayToDayPnl(month) {
             <td class="center-cell">${statusHtml}</td>
         </tr>`;
 
-        // Aggregate for Charts
         if(!dailyAgg[item.dateStr]) dailyAgg[item.dateStr] = { rev:0, exp:0, net:0 };
         if(item.amount > 0) dailyAgg[item.dateStr].rev += item.amount;
         else dailyAgg[item.dateStr].exp += Math.abs(item.amount);
@@ -453,24 +563,17 @@ function renderDayToDayPnl(month) {
     if (dataArray.length === 0) { html = `<tr><td colspan="9" style="text-align:center;padding:32px;">No transactions found</td></tr>`; } 
     document.getElementById('day-pnl-table-body').innerHTML = html;
     document.getElementById('pnl-month-title').innerText = `Day-to-Day Breakdown — ${month}`;
-    document.getElementById('daily-bar-title').innerText = `Daily Rev vs Exp — ${month}`;
-    document.getElementById('daily-line-title').innerText = `Daily Net P&L Trend — ${month}`;
 
-    // Render Daily Charts
     if(dailyBarInst) dailyBarInst.destroy();
     if(dailyLineInst) dailyLineInst.destroy();
 
     let dLabels = Object.keys(dailyAgg);
-    let dRevs = dLabels.map(k => dailyAgg[k].rev);
-    let dExps = dLabels.map(k => dailyAgg[k].exp);
-    let dNets = dLabels.map(k => dailyAgg[k].net);
-
     dailyBarInst = new Chart(document.getElementById('dailyBarChart').getContext('2d'), {
-        type: 'bar', data: { labels: dLabels, datasets: [{label:'Revenue', data:dRevs, backgroundColor:'#0284c7', borderRadius:4}, {label:'Expense', data:dExps, backgroundColor:'#d97706', borderRadius:4}] },
+        type: 'bar', data: { labels: dLabels, datasets: [{label:'Revenue', data:dLabels.map(k=>dailyAgg[k].rev), backgroundColor:'#0284c7', borderRadius:4}, {label:'Expense', data:dLabels.map(k=>dailyAgg[k].exp), backgroundColor:'#d97706', borderRadius:4}] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
     });
     dailyLineInst = new Chart(document.getElementById('dailyLineChart').getContext('2d'), {
-        type: 'line', data: { labels: dLabels, datasets: [{label:'Net P&L', data:dNets, borderColor:'#16a34a', backgroundColor:'#16a34a20', fill:true, tension:0.3}] },
+        type: 'line', data: { labels: dLabels, datasets: [{label:'Net P&L', data:dLabels.map(k=>dailyAgg[k].net), borderColor:'#16a34a', backgroundColor:'#16a34a20', fill:true, tension:0.3}] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
     });
 }
@@ -481,15 +584,12 @@ function renderRevenueDetails(month) {
     let dataArray = Object.keys(dataObj).map(key => { return { program: key, amount: dataObj[key] }; });
     dataArray.sort((a, b) => b.amount - a.amount);
 
-    let html = '', total = 0, i = 1;
-    let pieLabels = [], pieData = [];
-
+    let html = '', total = 0, i = 1, pieLabels = [], pieData = [];
     dataArray.forEach(item => {
         if (item.program.toLowerCase().includes(searchQuery)) {
             html += `<tr><td>${i++}</td><td>${item.program}</td><td class="num-cell c-teal">${fmt(item.amount)}</td></tr>`;
             total += item.amount;
-            pieLabels.push(item.program);
-            pieData.push(item.amount);
+            pieLabels.push(item.program); pieData.push(item.amount);
         }
     });
 
@@ -498,9 +598,7 @@ function renderRevenueDetails(month) {
     
     document.getElementById('revenue-table-body').innerHTML = html;
     document.getElementById('rev-month-title').innerText = `Detailed Breakdown — ${month}`;
-    document.getElementById('rev-pie-title').innerText = `Revenue Breakdown — ${month}`;
 
-    // Render Revenue Charts
     if(revPieInst) revPieInst.destroy();
     if(revTrendInst) revTrendInst.destroy();
 
@@ -520,9 +618,7 @@ function renderExpenseDetails(month) {
     if(!month) return;
     const data = globalDetailedExpenses[month] || [], searchQuery = document.getElementById('expense-search').value.toLowerCase();
     
-    let html = '', total = 0, i = 1;
-    let pieMap = {}; 
-
+    let html = '', total = 0, i = 1, pieMap = {}; 
     data.forEach(item => {
         if (item.category.toLowerCase().includes(searchQuery)) {
             html += `<tr><td>${i++}</td><td>${item.category}</td><td class="num-cell c-amber">${fmt(item.amount)}</td></tr>`;
@@ -533,12 +629,9 @@ function renderExpenseDetails(month) {
 
     if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No categories found</td></tr>`; } 
     else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-amber">${fmt(total)}</td></tr>`; }
-    
     document.getElementById('expense-table-body').innerHTML = html;
     document.getElementById('exp-month-title').innerText = `Detailed Breakdown — ${month}`;
-    document.getElementById('exp-pie-title').innerText = `Expense Breakdown — ${month}`;
 
-    // Render Expense Charts
     if(expPieInst) expPieInst.destroy();
     if(expTrendInst) expTrendInst.destroy();
 
