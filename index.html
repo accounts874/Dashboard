@@ -15,7 +15,7 @@
     --sidebar:#0f1623; --sidebar-hover:rgba(255,255,255,0.06); --sidebar-active:rgba(251,146,60,0.12);
     --bg:#f0f2f7; --surface:#ffffff; --surface-alt:#f7f8fc;
     --accent:#f97316; --accent-soft:#fff7ed;
-    --teal:#0d9488; --teal-soft:#f0fdfa;
+    --teal:#0284c7; --teal-soft:#f0fdfa; /* Adjusted to match your image blue/teal */
     --amber:#d97706; --amber-soft:#fffbeb;
     --red:#dc2626; --red-soft:#fef2f2;
     --green:#16a34a; --green-soft:#f0fdf4;
@@ -31,7 +31,6 @@
   .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
   .logo-icon i{color:#fff;font-size:15px}
   .logo-name{font-size:13px;font-weight:600;color:#fff;text-transform:uppercase}
-  .logo-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
   .nav-section{padding:20px 12px;flex:1}
   .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;color:rgba(255,255,255,0.5);text-decoration:none;border-radius:8px;font-size:13px;margin-bottom:2px;cursor:pointer;}
   .nav-item:hover{background:var(--sidebar-hover);color:rgba(255,255,255,0.85)}
@@ -74,9 +73,14 @@
   .center-cell{text-align:center}
   .c-teal{color:var(--teal)} .c-amber{color:var(--amber)} .c-green{color:var(--green)} .c-red{color:var(--red)}
   .total-row td{background:var(--surface-alt);font-weight:600;border-top:2px solid var(--border)}
-  .count-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:500;color:var(--text-2)}
-  .status-live{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:600;border:1px solid rgba(22,163,74,0.15)}
-  .status-live::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+  
+  /* BADGES & PILLS FOR DAY-TO-DAY P&L */
+  .status-profit { background: var(--green-soft); color: var(--green); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid rgba(22,163,74,0.15); display: inline-block; }
+  .status-loss { background: var(--red-soft); color: var(--red); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid rgba(220,38,38,0.15); display: inline-block;}
+  .bank-pill { background: #f3f4f6; color: #4b5563; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;}
+  .bank-pill.kotak { background: #fce7f3; color: #be185d; } /* Pink for Kotak */
+  .bank-pill.axis { background: #f3e8ff; color: #7e22ce; } /* Purple for Axis */
+  .bank-pill.razorpay { background: #e0f2fe; color: #0284c7; } /* Blue for Razorpay */
 
   .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .chart-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px 24px; border: 1px solid var(--border);}
@@ -134,7 +138,7 @@
             <th style="text-align:right">Expense (₹)</th>
             <th style="text-align:right">Net P&amp;L (₹)</th>
             <th style="text-align:center">Transactions</th>
-            <th>Status</th>
+            <th style="text-align:center">Status</th>
           </tr></thead>
           <tbody id="table-body"></tbody>
         </table>
@@ -192,12 +196,15 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
+              <th style="width:40px">#</th>
               <th>Date</th>
               <th>Particulars</th>
-              <th>Vch Type</th>
-              <th style="text-align:right">Revenue (₹)</th>
-              <th style="text-align:right">Expense (₹)</th>
-              <th style="text-align:right">Net (₹)</th>
+              <th style="text-align:right">Debit (₹)</th>
+              <th style="text-align:right">Credit (₹)</th>
+              <th style="text-align:right">Amount (₹)</th>
+              <th style="text-align:center">Bank</th>
+              <th style="text-align:center">Category</th>
+              <th style="text-align:center">Status</th>
           </tr></thead>
           <tbody id="day-pnl-table-body"></tbody>
         </table>
@@ -208,7 +215,7 @@
 </main>
 
 <script>
-// YAHAN APNA APPS SCRIPT URL DAALIYE
+// YAHAN APNA NAYA APPS SCRIPT URL DAALIYE
 const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
 let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}; 
@@ -245,7 +252,6 @@ function switchTab(tabId) {
 
   if(tabId === 'dashboard') {
       document.getElementById('main-title').innerText = "Accounts Dashboard";
-      // FIX: Force re-render of charts when dashboard tab is visible again
       const currentFy = document.getElementById('fy-filter').value || 'All';
       renderDashboard(currentFy);
   } else if (tabId === 'expenses') {
@@ -272,6 +278,9 @@ async function fetchAndRenderData(){
   try{
     const res=await fetch(apiUrl);
     if(!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) throw new Error("API URL incorrect or Permissions not set to 'Anyone'.");
+
     const raw = await res.json();
     if (raw.status === "error") throw new Error("Apps Script Error: " + raw.message);
     
@@ -329,6 +338,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // UPDATED: Mapping the specific columns from Day-Day P&L
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
@@ -342,31 +352,35 @@ async function fetchAndRenderData(){
             if(isNaN(d.getTime())) return; 
             
             let displayMonth = `${d.toLocaleString('en-US', { month: 'long' })} ${d.getFullYear()}`; 
-            let formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
             
-            let particulars = r["Particulars"] || r["Party"] || r["Category"] || "-";
-            let vchType = r["Vch Type"] || r["Type"] || "-";
-
-            let rev = 0, exp = 0;
-            if (r["Debit"] !== undefined || r["Credit"] !== undefined) {
-                let dr = parseAmt(r["Debit"]), cr = parseAmt(r["Credit"]);
-                let vt = String(vchType).toLowerCase();
-                if (vt.includes("receipt")) { rev = dr || cr; exp = 0; }
-                else if (vt.includes("payment")) { exp = cr || dr; rev = 0; }
-                else { rev = cr; exp = dr; }
-            } else if (r["Amount"] !== undefined || r["Amount (₹)"] !== undefined) {
-                let amt = parseAmt(r["Amount"] || r["Amount (₹)"]);
-                if (amt > 0) rev = amt;
-                if (amt < 0) exp = Math.abs(amt);
-            }
+            // Format to DD-MM-YYYY
+            let formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+            
+            // Extract Columns correctly from the backend
+            let particulars = String(r.ExpensePart || r.RevenuePart || "—").trim();
+            let debitAmt = parseAmt(r.Debit);
+            let creditAmt = parseAmt(r.Credit);
+            let netAmt = parseAmt(r.Amount);
+            let bankName = String(r.Bank || "—").trim();
+            let category = String(r.ExpCategory || r.RevCategory || "—").trim();
 
             if(!globalDayToDayPnl[displayMonth]) globalDayToDayPnl[displayMonth] = [];
-            globalDayToDayPnl[displayMonth].push({ dateObj: d, dateStr: formattedDate, particulars: particulars, vchType: vchType, revenue: rev, expense: exp, net: rev - exp });
+            
+            globalDayToDayPnl[displayMonth].push({
+                dateObj: d, 
+                dateStr: formattedDate, 
+                particulars: particulars,
+                debit: debitAmt,
+                credit: creditAmt,
+                amount: netAmt,
+                bank: bankName,
+                category: category
+            });
         });
     }
 
     const fys=new Set(), monthsForDropdown = new Set(), dayPnlMonths = new Set();
-    for(const [k,d] of Object.entries(globalMonthlyData)){
+    for(const[k,d]of Object.entries(globalMonthlyData)){
       d.displayMonth=fullMonth(k); d.fy=getFY(d.displayMonth);
       fys.add(d.fy); monthsForDropdown.add(d.displayMonth);
     }
@@ -396,37 +410,39 @@ async function fetchAndRenderData(){
   }
 }
 
+// RENDERING DAY-TO-DAY DETAILED TABLE (EXACT MOCKUP MATCH)
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
-    let html = '', totalRev = 0, totalExp = 0, totalNet = 0;
+    let html = '', i = 1;
     
     dataArray.forEach(item => {
-        let isPositive = item.net >= 0;
-        let colorClass = isPositive ? 'var(--green)' : 'var(--red)';
-        let pnlSign = isPositive ? '+' : '';
+        // Format logic exactly like image
+        let debitHtml = item.debit > 0 ? `<span class="c-red" style="font-weight:600;">${fmt(item.debit)}</span>` : '—';
+        let creditHtml = item.credit > 0 ? `<span class="c-teal" style="font-weight:600;">${fmt(item.credit)}</span>` : '—';
+        let statusHtml = item.amount >= 0 ? `<span class="status-profit">Profit</span>` : `<span class="status-loss">Loss</span>`;
         
+        let bankClass = item.bank.toLowerCase().replace(/\s/g, '');
+        let bankHtml = item.bank !== '—' ? `<span class="bank-pill ${bankClass}">${item.bank}</span>` : '—';
+
         html += `<tr>
-            <td style="white-space:nowrap;font-size:12px;color:var(--text-2);">${item.dateStr}</td>
-            <td style="font-weight:500;color:var(--text-1)">${item.particulars}</td>
-            <td style="font-size:12px;color:var(--text-2);">${item.vchType}</td>
-            <td class="num-cell c-teal">${fmt(item.revenue)}</td>
-            <td class="num-cell c-amber">${fmt(item.expense)}</td>
-            <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnlSign}${fmt(item.net)}</td>
+            <td style="color:var(--text-3);font-size:12px">${i++}</td>
+            <td style="font-weight:600;color:var(--text-1)">${item.dateStr}</td>
+            <td style="color:var(--text-2)">${item.particulars}</td>
+            <td class="num-cell">${debitHtml}</td>
+            <td class="num-cell">${creditHtml}</td>
+            <td class="num-cell" style="font-weight:600; color:var(--text-1)">${fmt(item.amount)}</td>
+            <td class="center-cell">${bankHtml}</td>
+            <td class="center-cell" style="color:var(--text-2)">${item.category}</td>
+            <td class="center-cell">${statusHtml}</td>
         </tr>`;
-        totalRev += item.revenue; totalExp += item.expense; totalNet += item.net;
     });
 
-    if (dataArray.length === 0) { html = `<tr><td colspan="6" style="text-align:center;padding:32px;">No transactions found</td></tr>`; } 
-    else { 
-        let tColor = totalNet >= 0 ? 'var(--green)' : 'var(--red)';
-        let tSign = totalNet >= 0 ? '+' : '';
-        html += `<tr class="total-row"><td colspan="3">Monthly Total</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${tSign}${fmt(totalNet)}</td></tr>`; 
-    }
-
+    if (dataArray.length === 0) { html = `<tr><td colspan="9" style="text-align:center;padding:32px;">No transactions found</td></tr>`; } 
     document.getElementById('day-pnl-table-body').innerHTML = html;
+    document.getElementById('pnl-month-title').innerText = `Day-to-Day Breakdown — ${month}`;
 }
 
 function renderRevenueDetails(month) {
@@ -470,7 +486,6 @@ function renderDashboard(fy){
     if(fy!=='All'&&d.fy!==fy)continue;
     const pnl = d.revenue-d.expense;
     
-    // Parse label safely for charts
     let splitLabel = d.displayMonth.split(" ");
     let shortName = splitLabel.length > 1 ? splitLabel[0].substring(0,3) + " " + splitLabel[1] : d.displayMonth;
     labels.push(shortName);
@@ -489,7 +504,7 @@ function renderDashboard(fy){
       <td class="num-cell c-amber">${fmt(d.expense)}</td>
       <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnlSign}${fmt(pnl)}</td>
       <td class="center-cell"><span class="count-badge">${d.count}</span></td>
-      <td><span class="status-live">Live</span></td>
+      <td class="center-cell"><span class="status-live">Live</span></td>
     </tr>`;
   }
 
@@ -502,7 +517,6 @@ function renderDashboard(fy){
   document.getElementById('tot-revenue').textContent=fmt(totalRev);
   document.getElementById('tot-expense').textContent=fmt(totalExp);
   
-  // FIX FOR TOP CARD COLOR
   const pnlValEl = document.getElementById('tot-pnl');
   pnlValEl.textContent = (totalPnl>=0?'+':'') + fmt(totalPnl);
   pnlValEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
@@ -512,7 +526,6 @@ function renderDashboard(fy){
   const card=document.getElementById('pnl-card');
   card.className = totalPnl>=0 ? 'metric-card mc-green' : 'metric-card mc-red';
 
-  // RENDER CHARTS
   if(barChartInstance) barChartInstance.destroy();
   if(lineChartInstance) lineChartInstance.destroy();
   
@@ -521,7 +534,7 @@ function renderDashboard(fy){
   const barCtx = document.getElementById('barChart').getContext('2d');
   barChartInstance = new Chart(barCtx, { 
       type:'bar', 
-      data:{labels:labels, datasets:[{label:'Revenue', data:revs, backgroundColor:'#0d9488', borderRadius:5}, {label:'Expense', data:exps, backgroundColor:'#d97706', borderRadius:5}]}, 
+      data:{labels:labels, datasets:[{label:'Revenue', data:revs, backgroundColor:'#0284c7', borderRadius:5}, {label:'Expense', data:exps, backgroundColor:'#d97706', borderRadius:5}]}, 
       options:{responsive:true, maintainAspectRatio:false} 
   });
   
