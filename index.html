@@ -25,6 +25,7 @@
   }
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);display:flex;min-height:100vh;font-size:14px;}
 
+  /* SIDEBAR */
   .sidebar{width:240px;background:var(--sidebar);display:flex;flex-direction:column;padding:0;position:sticky;top:0;height:100vh;flex-shrink:0}
   .logo-area{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}
   .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
@@ -36,6 +37,7 @@
   .nav-item.active{background:var(--sidebar-active);color:#fb923c;font-weight:500}
   .nav-item i{width:16px;text-align:center}
 
+  /* MAIN & VIEWS */
   .main-wrapper{flex:1;display:flex;flex-direction:column;min-width:0;padding:28px 28px 40px}
   .view-section { display: none; }
   .view-section.active-view { display: block; animation: fadeIn 0.3s ease; }
@@ -135,7 +137,15 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Month</th><th style="text-align:right">Revenue (₹)</th><th style="text-align:right">Expense (₹)</th><th style="text-align:right">Net P&amp;L (₹)</th></tr></thead>
+          <thead><tr>
+            <th style="width:40px">#</th>
+            <th>Month</th>
+            <th style="text-align:right">Revenue (₹)</th>
+            <th style="text-align:right">Expense (₹)</th>
+            <th style="text-align:right">Net P&amp;L (₹)</th>
+            <th style="text-align:center">Transactions</th>
+            <th style="text-align:center">Status</th>
+          </tr></thead>
           <tbody id="table-body"></tbody>
         </table>
       </div>
@@ -205,8 +215,9 @@
               <th style="text-align:center; color:var(--green)">Done Cnt</th>
               <th style="text-align:right; color:var(--amber)">U/P Rev (Pend)</th>
               <th style="text-align:center; color:var(--amber)">U/P Cnt</th>
-              <th style="text-align:right; color:var(--red)">Drop Rev (Pend)</th>
-              <th style="text-align:center; color:var(--red)">Drop Cnt</th>
+              
+              <th style="text-align:right; color:var(--red)">Drop Out Rev (Pend)</th>
+              <th style="text-align:center; color:var(--red)">Drop Out Cnt</th>
             </tr>
           </thead>
           <tbody id="sales-table-body"></tbody>
@@ -247,7 +258,10 @@
 // ==========================================
 const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
+// Global Storage
 let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}, globalSalesData={}; 
+
+// Chart Instances
 let barChartInst=null, lineChartInst=null, expPieInst=null, expTrendInst=null, revPieInst=null, revTrendInst=null, dailyBarInst=null, dailyLineInst=null;
 
 const chartColors = ['#0284c7', '#d97706', '#16a34a', '#dc2626', '#7e22ce', '#db2777', '#ea580c', '#65a30d', '#0891b2', '#4f46e5', '#8b5cf6', '#ec4899'];
@@ -319,7 +333,6 @@ async function fetchAndRenderData(){
     if(!res.ok) throw new Error(`HTTP Error: ${res.status}`);
     const raw = await res.json();
     
-    // 🔥 ROBUST ERROR DETECTOR FOR OLD URLS 🔥
     if (Array.isArray(raw) || !raw.sales) {
         throw new Error("OLD API DETECTED: Aapka HTML purane Apps Script URL se data le raha hai. Kripya naya Deployment karke naya URL HTML mein paste karein.");
     }
@@ -327,6 +340,7 @@ async function fetchAndRenderData(){
     
     globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; globalSalesData={};
     
+    // 1. Regular Sales Processing
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
@@ -342,12 +356,15 @@ async function fetchAndRenderData(){
           let program = cleanProgramName(r["Selected Program"]);
           let status = String(r["Status"] || "").trim().toLowerCase();
 
+          // Fill Dashboard Data
           globalMonthlyData[displayMonth].revenue += fee;
           globalMonthlyData[displayMonth].count += 1; 
 
+          // Fill Revenue Breakdown
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           globalDetailedRevenue[displayMonth][program] = (globalDetailedRevenue[displayMonth][program] || 0) + fee;
 
+          // Fill Sales Tab Breakdown
           if(!globalSalesData[displayMonth]) {
               globalSalesData[displayMonth] = { fy: getFY(displayMonth), displayMonth: displayMonth, dateObj: new Date(displayMonth), totalRev: 0, totalCount: 0, doneRev: 0, doneCount: 0, dropoutRev: 0, dropoutCount: 0, underProcessRev: 0, underProcessCount: 0 };
           }
@@ -358,9 +375,12 @@ async function fetchAndRenderData(){
           if (status.includes("done") || status.includes("active") || status.includes("complete")) {
               globalSalesData[displayMonth].doneCount += 1;
               globalSalesData[displayMonth].doneRev += fee; 
-          } else if (status.includes("dropout")) {
+              
+          // FIXED: Now accurately detects "drop out" (with space) or "dropout"
+          } else if (status.includes("dropout") || status.includes("drop out")) {
               globalSalesData[displayMonth].dropoutCount += 1;
               globalSalesData[displayMonth].dropoutRev += amtPending; 
+              
           } else if (status.includes("process") || status.includes("pending")) {
               globalSalesData[displayMonth].underProcessCount += 1;
               globalSalesData[displayMonth].underProcessRev += amtPending; 
@@ -368,6 +388,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // 2. Other Sales Processing
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
             if(!r["Month"]) return;
@@ -399,6 +420,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // 3. Expenses Processing
     if(raw.expenses) {
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
@@ -415,6 +437,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // 4. Day to Day P&L Processing
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
@@ -445,6 +468,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // Prepare Dropdowns
     const fys=new Set(), monthsForDropdown = new Set(), dayPnlMonths = new Set();
     for(const[k,d]of Object.entries(globalMonthlyData)){
       fys.add(d.fy); monthsForDropdown.add(d.displayMonth);
@@ -471,6 +495,7 @@ async function fetchAndRenderData(){
     const pnlSel=document.getElementById('pnl-month-filter'); pnlSel.innerHTML='';
     Array.from(dayPnlMonths).sort().reverse().forEach(m=>{ pnlSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
+    // Initial Render
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
@@ -496,6 +521,7 @@ function getSortedMonthTrendData() {
     return arr.sort((a,b) => a.dateObj - b.dateObj);
 }
 
+// RENDERING SALES DATA 
 function renderSalesData(fy) {
     let html = '', totalRev = 0, totalCount = 0, doneRev = 0, doneCount = 0, upRev = 0, upCount = 0, dropRev = 0, dropCount = 0;
 
@@ -540,6 +566,7 @@ function renderSalesData(fy) {
     document.getElementById('sales-table-body').innerHTML = html;
 }
 
+// RENDERING DAY-TO-DAY
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
@@ -677,13 +704,15 @@ function renderDashboard(fy){
       <td class="num-cell c-teal">${fmt(t.rev)}</td>
       <td class="num-cell c-amber">${fmt(t.exp)}</td>
       <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnl>=0?'+':''}${fmt(pnl)}</td>
+      <td class="center-cell"><span class="count-badge">${d.count || 0}</span></td>
+      <td class="center-cell"><span class="status-live">Live</span></td>
     </tr>`;
   });
 
-  if(i===1){ html=`<tr><td colspan="5" style="text-align:center;padding:32px;">No data available</td></tr>`; } 
+  if(i===1){ html=`<tr><td colspan="7" style="text-align:center;padding:32px;">No data available</td></tr>`; } 
   else { 
       let tColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
-      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td></tr>`; 
+      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td><td></td></tr>`; 
   }
 
   document.getElementById('tot-revenue').textContent=fmt(totalRev);
