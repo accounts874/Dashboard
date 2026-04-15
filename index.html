@@ -22,96 +22,60 @@
     --text-1:#111827; --text-2:#6b7280; --text-3:#9ca3af; --border:#e5e7eb;
     --radius-sm:8px; --radius:12px; --radius-lg:16px;
     --shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04);
-    --shadow-md:0 4px 20px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.04);
   }
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);display:flex;min-height:100vh;font-size:14px;line-height:1.5}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);display:flex;min-height:100vh;font-size:14px;}
 
+  /* SIDEBAR */
   .sidebar{width:240px;background:var(--sidebar);display:flex;flex-direction:column;padding:0;position:sticky;top:0;height:100vh;flex-shrink:0}
   .logo-area{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}
   .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
   .logo-icon i{color:#fff;font-size:15px}
-  .logo-name{font-size:13px;font-weight:600;color:#fff;letter-spacing:0.04em;text-transform:uppercase}
+  .logo-name{font-size:13px;font-weight:600;color:#fff;text-transform:uppercase}
   .logo-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
   .nav-section{padding:20px 12px;flex:1}
-  .nav-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-transform:uppercase;padding:0 8px;margin-bottom:8px}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;color:rgba(255,255,255,0.5);text-decoration:none;border-radius:8px;font-size:13px;font-weight:400;margin-bottom:2px;transition:all 0.15s; cursor:pointer;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;color:rgba(255,255,255,0.5);text-decoration:none;border-radius:8px;font-size:13px;margin-bottom:2px;cursor:pointer;}
   .nav-item:hover{background:var(--sidebar-hover);color:rgba(255,255,255,0.85)}
   .nav-item.active{background:var(--sidebar-active);color:#fb923c;font-weight:500}
-  .nav-item i{width:16px;font-size:13px;text-align:center}
-  .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.06)}
-  .user-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px}
-  .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f97316,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
-  .user-name{font-size:12px;color:rgba(255,255,255,0.6);font-weight:500}
+  .nav-item i{width:16px;text-align:center}
 
+  /* MAIN & VIEWS */
   .main-wrapper{flex:1;display:flex;flex-direction:column;min-width:0;padding:28px 28px 40px}
   .view-section { display: none; }
   .view-section.active-view { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
   .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
-  .page-title{font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:var(--text-1);line-height:1.2}
+  .page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text-1);}
   .page-sub{font-size:13px;color:var(--text-2);margin-top:4px}
-  .topbar-right{display:flex;align-items:center;gap:10px}
-  .btn-refresh{display:flex;align-items:center;gap:7px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all 0.15s}
-  .btn-refresh:hover{background:#ea580c;transform:translateY(-1px)}
-  .live-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--green-soft);color:var(--green);border-radius:20px;font-size:12px;font-weight:500;border:1px solid rgba(22,163,74,0.15)}
-  .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-
+  .btn-refresh{display:flex;align-items:center;gap:7px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;}
+  
   .loading-bar{background:linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft));background-size:200%;animation:shimmer 1.5s infinite;border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--amber);font-weight:500;border:1px solid #fed7aa;margin-bottom:24px}
   @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
 
   .metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-  .metric-card{background:var(--surface);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;}
-  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
-  .mc-teal::before{background:linear-gradient(90deg,var(--teal),#5eead4)}
-  .mc-amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
-  .mc-green::before{background:linear-gradient(90deg,var(--green),#4ade80)}
-  .mc-red::before{background:linear-gradient(90deg,var(--red),#f87171)}
-  .metric-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:14px}
-  .mc-teal .metric-icon{background:var(--teal-soft);color:var(--teal)}
-  .mc-amber .metric-icon{background:var(--amber-soft);color:var(--amber)}
-  .mc-green .metric-icon{background:var(--green-soft);color:var(--green)}
-  .mc-red .metric-icon{background:var(--red-soft);color:var(--red)}
-  .metric-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:6px}
-  .metric-value{font-size:26px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px}
-  .mc-teal .metric-value{color:var(--teal)}
-  .mc-amber .metric-value{color:var(--amber)}
-  .mc-green .metric-value{color:var(--green)}
-  .mc-red .metric-value{color:var(--red)}
-  .metric-hint{font-size:12px;color:var(--text-3)}
-  .metric-bg-icon{position:absolute;right:16px;bottom:12px;font-size:48px;opacity:0.04;color:var(--text-1)}
-
+  .metric-card{background:var(--surface);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--shadow);border:1px solid var(--border);border-top:3px solid var(--teal);}
+  .mc-amber{border-top-color:var(--amber)} .mc-green{border-top-color:var(--green)} .mc-red{border-top-color:var(--red)}
+  .metric-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-2);margin-bottom:6px}
+  .metric-value{font-size:26px;font-weight:600;margin-bottom:4px}
+  
   .section{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:24px;overflow:hidden}
   .section-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border)}
-  .section-title{font-size:15px;font-weight:600;color:var(--text-1)}
-  .header-controls { display: flex; gap: 12px; align-items: center; }
-  .search-wrapper { position: relative; }
-  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 12px; }
-  .search-input { padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-1); outline: none; width: 220px; transition: border-color 0.15s; }
-  .search-input:focus { border-color: var(--accent); }
-  .fy-select{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);background:#fff;cursor:pointer;outline:none;}
-  
-  .table-wrap{overflow-x:auto}
+  .section-title{font-size:15px;font-weight:600;}
+  .header-controls { display: flex; gap: 12px; }
+  .search-input { padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;}
+  .fy-select{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm); outline:none;}
+
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   thead tr{background:var(--surface-alt)}
-  th{padding:11px 16px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-2);text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
-  td{padding:13px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
-  tbody tr:hover{background:var(--surface-alt)}
-  .num-cell{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
-  .center-cell{text-align:center}
-  .month-name{font-weight:600;color:var(--text-1)}
-  .fy-pill{font-size:11px;color:var(--text-2);background:var(--surface-alt);padding:2px 7px;border-radius:4px;border:1px solid var(--border);margin-left:8px;}
+  th{padding:11px 16px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-2);text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:13px 16px;border-bottom:1px solid var(--border);}
+  .num-cell{text-align:right;font-weight:500}
   .c-teal{color:var(--teal)} .c-amber{color:var(--amber)} .c-green{color:var(--green)} .c-red{color:var(--red)}
-  .count-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:500;color:var(--text-2)}
-  .status-live{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:600;border:1px solid rgba(22,163,74,0.15)}
-  .status-live::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
-  .total-row td{background:var(--surface-alt);font-weight:600;font-size:14px;border-top:2px solid var(--border)}
+  .total-row td{background:var(--surface-alt);font-weight:600;border-top:2px solid var(--border)}
 
   .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .chart-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);padding:22px 24px}
-  .chart-head{margin-bottom:18px}
-  .chart-title{font-size:14px;font-weight:600;color:var(--text-1)}
+  .chart-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px 24px; border: 1px solid var(--border);}
+  .chart-title{font-size:14px;font-weight:600;margin-bottom: 15px;}
   .chart-wrap{position:relative;height:220px;width:100%}
 </style>
 </head>
@@ -121,14 +85,12 @@
   <div class="logo-area">
     <div class="logo-icon"><i class="fas fa-layer-group"></i></div>
     <div class="logo-name">Skill In A Box</div>
-    <div class="logo-sub">Finance Suite</div>
   </div>
   <nav class="nav-section">
-    <div class="nav-label">Main Menu</div>
     <a class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a class="nav-item" id="nav-expenses" onclick="switchTab('expenses')"><i class="fas fa-file-invoice-dollar"></i> Monthly Expense</a>
     <a class="nav-item" id="nav-revenue" onclick="switchTab('revenue')"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
-    <a class="nav-item" id="nav-pnl" onclick="switchTab('pnl')"><i class="fas fa-chart-pie"></i> Monthly P&amp;L</a>
+    <a class="nav-item" id="nav-pnl" onclick="switchTab('pnl')"><i class="fas fa-chart-pie"></i> Day-Day P&amp;L</a>
   </nav>
 </aside>
 
@@ -140,7 +102,6 @@
       <div class="page-sub" id="main-subtitle">Live P&amp;L overview — synced from Google Sheets</div>
     </div>
     <div class="topbar-right">
-      <div class="live-badge"><span class="live-dot"></span> Live</div>
       <button class="btn-refresh" onclick="fetchAndRenderData()"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
   </div>
@@ -149,60 +110,27 @@
 
   <div id="view-dashboard" class="view-section active-view">
     <div class="metrics-grid">
-      <div class="metric-card mc-teal">
-        <div class="metric-icon"><i class="fas fa-arrow-trend-up"></i></div>
-        <div class="metric-label">Total Revenue</div>
-        <div class="metric-value" id="tot-revenue">₹0</div>
-        <div class="metric-hint">Sum of Total Fees & Other Sales</div>
-      </div>
-      <div class="metric-card mc-amber">
-        <div class="metric-icon"><i class="fas fa-receipt"></i></div>
-        <div class="metric-label">Total Expense</div>
-        <div class="metric-value" id="tot-expense">₹0</div>
-        <div class="metric-hint">Sum of all expenses across Exp tabs</div>
-      </div>
-      <div class="metric-card mc-green" id="pnl-card">
-        <div class="metric-icon" id="pnl-icon"><i class="fas fa-scale-balanced"></i></div>
-        <div class="metric-label">Net P&amp;L</div>
-        <div class="metric-value" id="tot-pnl">₹0</div>
-        <div class="metric-hint">Revenue minus total expenses</div>
-      </div>
+      <div class="metric-card"><div class="metric-label">Total Revenue</div><div class="metric-value c-teal" id="tot-revenue">₹0</div></div>
+      <div class="metric-card mc-amber"><div class="metric-label">Total Expense</div><div class="metric-value c-amber" id="tot-expense">₹0</div></div>
+      <div class="metric-card mc-green" id="pnl-card"><div class="metric-label">Net P&amp;L</div><div class="metric-value" id="tot-pnl">₹0</div></div>
     </div>
 
     <div class="section">
       <div class="section-header">
-        <div class="section-title">Month-wise P&amp;L Summary <span id="filter-label"></span></div>
-        <select id="fy-filter" class="fy-select">
-          <option value="All">All Financial Years</option>
-        </select>
+        <div class="section-title">Month-wise P&amp;L Summary</div>
+        <select id="fy-filter" class="fy-select"><option value="All">All Financial Years</option></select>
       </div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th style="width:40px">#</th>
-              <th>Month</th>
-              <th style="text-align:right">Revenue (₹)</th>
-              <th style="text-align:right">Expense (₹)</th>
-              <th style="text-align:right">Net P&amp;L (₹)</th>
-              <th style="text-align:center">Transactions</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>Month</th><th style="text-align:right">Revenue (₹)</th><th style="text-align:right">Expense (₹)</th><th style="text-align:right">Net P&amp;L (₹)</th></tr></thead>
           <tbody id="table-body"></tbody>
         </table>
       </div>
     </div>
 
     <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-head"><div class="chart-title">Revenue vs Expense</div></div>
-        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-head"><div class="chart-title">Net P&amp;L Trend</div></div>
-        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
-      </div>
+      <div class="chart-card"><div class="chart-title">Revenue vs Expense</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Net P&amp;L Trend</div><div class="chart-wrap"><canvas id="lineChart"></canvas></div></div>
     </div>
   </div>
 
@@ -211,22 +139,13 @@
       <div class="section-header">
         <div class="section-title" id="exp-month-title">Detailed Expenses</div>
         <div class="header-controls">
-            <div class="search-wrapper">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="expense-search" class="search-input" placeholder="Search category..." oninput="renderExpenseDetails(document.getElementById('expense-month-filter').value)">
-            </div>
+            <input type="text" id="expense-search" class="search-input" placeholder="Search category..." oninput="renderExpenseDetails(document.getElementById('expense-month-filter').value)">
             <select id="expense-month-filter" class="fy-select" onchange="renderExpenseDetails(this.value)"></select>
         </div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th style="width:40px">#</th>
-              <th>Category / Particulars</th>
-              <th style="text-align:right">Amount (₹)</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>Category / Particulars</th><th style="text-align:right">Amount (₹)</th></tr></thead>
           <tbody id="expense-table-body"></tbody>
         </table>
       </div>
@@ -238,22 +157,13 @@
       <div class="section-header">
         <div class="section-title" id="rev-month-title">Detailed Revenue</div>
         <div class="header-controls">
-            <div class="search-wrapper">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="revenue-search" class="search-input" placeholder="Search program..." oninput="renderRevenueDetails(document.getElementById('revenue-month-filter').value)">
-            </div>
+            <input type="text" id="revenue-search" class="search-input" placeholder="Search program..." oninput="renderRevenueDetails(document.getElementById('revenue-month-filter').value)">
             <select id="revenue-month-filter" class="fy-select" onchange="renderRevenueDetails(this.value)"></select>
         </div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th style="width:40px">#</th>
-              <th>Program / Category</th>
-              <th style="text-align:right">Revenue (₹)</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>Program / Category</th><th style="text-align:right">Revenue (₹)</th></tr></thead>
           <tbody id="revenue-table-body"></tbody>
         </table>
       </div>
@@ -264,21 +174,11 @@
     <div class="section">
       <div class="section-header">
         <div class="section-title" id="pnl-month-title">Day-to-Day P&amp;L</div>
-        <div class="header-controls">
-            <select id="pnl-month-filter" class="fy-select" onchange="renderDayToDayPnl(this.value)"></select>
-        </div>
+        <select id="pnl-month-filter" class="fy-select" onchange="renderDayToDayPnl(this.value)"></select>
       </div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th style="width:40px">#</th>
-              <th>Date</th>
-              <th style="text-align:right">Daily Revenue (₹)</th>
-              <th style="text-align:right">Daily Expense (₹)</th>
-              <th style="text-align:right">Net P&amp;L (₹)</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>Date</th><th style="text-align:right">Daily Revenue (₹)</th><th style="text-align:right">Daily Expense (₹)</th><th style="text-align:right">Net P&amp;L (₹)</th></tr></thead>
           <tbody id="day-pnl-table-body"></tbody>
         </table>
       </div>
@@ -288,94 +188,103 @@
 </main>
 
 <script>
-// YAHAN APNA NAYA APPS SCRIPT URL DAALIYE
+// YAHAN APNA APPS SCRIPT URL DAALIYE (Naya wala)
 const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
-let globalMonthlyData={};
-let globalDetailedExpenses={}; 
-let globalDetailedRevenue={}; 
-let globalDayToDayPnl={}; 
-
-let barChartInstance=null;
-let lineChartInstance=null;
+let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}; 
+let barChartInstance=null, lineChartInstance=null;
 
 const fmt=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v);
 const fullMonth=s=>{
   const m={"Jan":"January","Feb":"February","Mar":"March","Apr":"April","May":"May","Jun":"June","Jul":"July","Aug":"August","Sep":"September","Oct":"October","Nov":"November","Dec":"December"};
-  const p=s.split(" ");
-  return p.length===2&&m[p[0]]?m[p[0]]+" "+p[1]:s;
+  const p=s.split(" "); return p.length===2&&m[p[0]]?m[p[0]]+" "+p[1]:s;
 };
 const getFY=d=>{
-  const p=d.split(" "),mo=p[0],yr=parseInt(p[1]);
+  const p=d.split(" "), mo=p[0], yr=parseInt(p[1]);
   const fyMos=["April","May","June","July","August","September","October","November","December"];
   return fyMos.includes(mo)?`FY ${yr}-${(yr+1).toString().slice(-2)}`:`FY ${yr-1}-${yr.toString().slice(-2)}`;
 };
 
+// POWERFUL CLEANERS to prevent NaN Errors
 const cleanProgramName = (name) => {
     if (!name) return "UNSPECIFIED PROGRAM";
     let clean = String(name).trim().replace(/\s+/g, ' ').toUpperCase();
-    if (clean === "") return "UNSPECIFIED PROGRAM";
-    return clean;
+    return clean === "" ? "UNSPECIFIED PROGRAM" : clean;
+};
+const parseAmt = (val) => {
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    const cleaned = String(val).replace(/[^0-9.-]+/g, ""); // Removes ₹, commas, text
+    return Number(cleaned) || 0;
 };
 
-// TAB SWITCHING LOGIC
 function switchTab(tabId) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById('nav-' + tabId).classList.add('active');
-
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
   document.getElementById('view-' + tabId).classList.add('active-view');
 
   if(tabId === 'dashboard') {
       document.getElementById('main-title').innerText = "Accounts Dashboard";
-      document.getElementById('main-subtitle').innerText = "Live P&L overview — synced from Google Sheets";
   } else if (tabId === 'expenses') {
       document.getElementById('main-title').innerText = "Monthly Expenses";
-      document.getElementById('main-subtitle').innerText = "Detailed category-wise breakdown";
       document.getElementById('expense-search').value = ''; 
       renderExpenseDetails(document.getElementById('expense-month-filter').value);
   } else if (tabId === 'revenue') {
       document.getElementById('main-title').innerText = "Monthly Revenue";
-      document.getElementById('main-subtitle').innerText = "Program & Category-wise breakdown";
       document.getElementById('revenue-search').value = ''; 
       renderRevenueDetails(document.getElementById('revenue-month-filter').value);
   } else if (tabId === 'pnl') {
       document.getElementById('main-title').innerText = "Day-to-Day P&L";
-      document.getElementById('main-subtitle').innerText = "Daily cash flow tracking";
       renderDayToDayPnl(document.getElementById('pnl-month-filter').value);
   }
 }
 
 async function fetchAndRenderData(){
-  document.getElementById('loading-indicator').style.display='flex';
+  const loader = document.getElementById('loading-indicator');
+  loader.style.display='flex';
+  loader.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Fetching live data...`;
+  loader.style.background = "linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft))";
+  loader.style.color = "var(--amber)";
+
   try{
     const res=await fetch(apiUrl);
-    const raw=await res.json();
     
-    globalMonthlyData={};
-    globalDetailedExpenses={}; 
-    globalDetailedRevenue={}; 
-    globalDayToDayPnl={}; 
+    // Check if URL is completely invalid
+    if(!res.ok) throw new Error(`HTTP Error: ${res.status}`);
     
+    // Check if Google returned HTML (Auth Error / URL Error)
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+        throw new Error("API URL is incorrect or Permissions are not set to 'Anyone'. Please redeploy Apps Script properly.");
+    }
+
+    const raw = await res.json();
+    
+    // Check if Apps script crashed internally
+    if (raw.status === "error") throw new Error("Apps Script Error: " + raw.message);
+    
+    globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; 
+    
+    // 1. Regular Sales
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
           k=k.charAt(0).toUpperCase()+k.slice(1);
           let displayMonth = fullMonth(k);
 
-          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
-          let fee = Number(r["Total Fee"])||0;
+          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0};
+          let fee = parseAmt(r["Total Fee"]);
           let program = cleanProgramName(r["Selected Program"]);
 
           globalMonthlyData[k].revenue+=fee;
-          globalMonthlyData[k].count+=1;
-
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           if(!globalDetailedRevenue[displayMonth][program]) globalDetailedRevenue[displayMonth][program] = 0;
           globalDetailedRevenue[displayMonth][program] += fee;
         });
     }
 
+    // 2. Other Sales
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
             if(!r["Month"]) return;
@@ -383,133 +292,86 @@ async function fetchAndRenderData(){
             k = k.charAt(0).toUpperCase() + k.slice(1);
             let displayMonth = fullMonth(k);
 
-            if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0,count:0};
+            if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0};
 
-            let ext = Number(r["Extension"]) || 0;
-            let work = Number(r["Workshop"]) || 0;
-            let act = Number(r["Activation"]) || 0;
-
+            let ext = parseAmt(r["Extension"]), work = parseAmt(r["Workshop"]), act = parseAmt(r["Activation"]);
             globalMonthlyData[k].revenue += (ext + work + act);
 
             if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
-            if(ext > 0) {
-                if(!globalDetailedRevenue[displayMonth]["EXTENSION"]) globalDetailedRevenue[displayMonth]["EXTENSION"] = 0;
-                globalDetailedRevenue[displayMonth]["EXTENSION"] += ext;
-            }
-            if(work > 0) {
-                if(!globalDetailedRevenue[displayMonth]["WORKSHOP"]) globalDetailedRevenue[displayMonth]["WORKSHOP"] = 0;
-                globalDetailedRevenue[displayMonth]["WORKSHOP"] += work;
-            }
-            if(act > 0) {
-                if(!globalDetailedRevenue[displayMonth]["ACTIVATION"]) globalDetailedRevenue[displayMonth]["ACTIVATION"] = 0;
-                globalDetailedRevenue[displayMonth]["ACTIVATION"] += act;
-            }
+            if(ext > 0) { globalDetailedRevenue[displayMonth]["EXTENSION"] = (globalDetailedRevenue[displayMonth]["EXTENSION"]||0) + ext; }
+            if(work > 0) { globalDetailedRevenue[displayMonth]["WORKSHOP"] = (globalDetailedRevenue[displayMonth]["WORKSHOP"]||0) + work; }
+            if(act > 0) { globalDetailedRevenue[displayMonth]["ACTIVATION"] = (globalDetailedRevenue[displayMonth]["ACTIVATION"]||0) + act; }
         });
     }
 
+    // 3. Expenses
     if(raw.expenses) {
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
           k=k.charAt(0).toUpperCase()+k.slice(1);
           let displayMonth = fullMonth(k);
           
-          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
-          globalMonthlyData[k].expense+=Number(r["Amount"])||0;
+          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0};
+          globalMonthlyData[k].expense+=parseAmt(r["Amount"]);
 
           if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
           globalDetailedExpenses[displayMonth].push({
-              category: r["Category"] || "Uncategorized",
-              amount: Number(r["Amount"]) || 0
+              category: r["Category"], amount: parseAmt(r["Amount"])
           });
         });
     }
 
-    // FIX FOR DAY-TO-DAY P&L
+    // 4. Day-to-Day P&L
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
             if(!rawDate) return;
             
-            // Robust Date Parsing for Google Sheets formats
-            let d;
-            if (typeof rawDate === 'string') {
-                if (rawDate.match(/^\d{2}-\d{2}-\d{4}/)) { // DD-MM-YYYY format
-                    let parts = rawDate.split(' ')[0].split('-'); 
-                    d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
-                } else {
-                    d = new Date(rawDate);
-                }
-            } else {
-                d = new Date(rawDate); // If it's already a Date string from JSON
+            let d = new Date(rawDate);
+            if(isNaN(d.getTime()) && typeof rawDate === 'string') {
+                let p = rawDate.split(' ')[0].split(/[-/]/);
+                if(p.length === 3) d = new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`);
             }
-            if(isNaN(d)) return; 
+            if(isNaN(d.getTime())) return; 
             
-            let monthName = d.toLocaleString('en-US', { month: 'long' });
-            let year = d.getFullYear();
-            let displayMonth = `${monthName} ${year}`; 
-            
+            let displayMonth = `${d.toLocaleString('en-US', { month: 'long' })} ${d.getFullYear()}`; 
             let formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
-
-            // Amount Column (F) indicates Revenue or Expense
-            let netAmount = Number(r["Amount"]) || 0;
+            let netAmount = parseAmt(r["Amount"]);
             
             let rev = netAmount > 0 ? netAmount : 0;
             let exp = netAmount < 0 ? Math.abs(netAmount) : 0;
 
             if(!globalDayToDayPnl[displayMonth]) globalDayToDayPnl[displayMonth] = {};
-            
-            // AGGREGATING BY DATE
             if(!globalDayToDayPnl[displayMonth][formattedDate]) {
-                 globalDayToDayPnl[displayMonth][formattedDate] = {
-                     dateObj: d,
-                     dateStr: formattedDate,
-                     revenue: 0,
-                     expense: 0,
-                     net: 0
-                 };
+                 globalDayToDayPnl[displayMonth][formattedDate] = { dateObj: d, dateStr: formattedDate, revenue: 0, expense: 0, net: 0 };
             }
-            
             globalDayToDayPnl[displayMonth][formattedDate].revenue += rev;
             globalDayToDayPnl[displayMonth][formattedDate].expense += exp;
             globalDayToDayPnl[displayMonth][formattedDate].net += netAmount;
         });
     }
 
-    const fys=new Set();
-    const monthsForDropdown = new Set();
-    const dayPnlMonths = new Set();
-
+    const fys=new Set(), monthsForDropdown = new Set(), dayPnlMonths = new Set();
     for(const[k,d]of Object.entries(globalMonthlyData)){
-      d.displayMonth=fullMonth(k);
-      d.fy=getFY(d.displayMonth);
-      fys.add(d.fy);
-      monthsForDropdown.add(d.displayMonth);
+      d.displayMonth=fullMonth(k); d.fy=getFY(d.displayMonth);
+      fys.add(d.fy); monthsForDropdown.add(d.displayMonth);
     }
-    
-    for(const key of Object.keys(globalDayToDayPnl)) {
-        dayPnlMonths.add(key);
-    }
+    for(const key of Object.keys(globalDayToDayPnl)) { dayPnlMonths.add(key); }
 
-    document.getElementById('loading-indicator').style.display='none';
+    loader.style.display='none';
     
-    const sel=document.getElementById('fy-filter');
-    sel.innerHTML='<option value="All">All Financial Years</option>';
+    // Fill Dropdowns
+    const sel=document.getElementById('fy-filter'); sel.innerHTML='<option value="All">All Financial Years</option>';
     Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
     
-    const expSel=document.getElementById('expense-month-filter');
-    const revSel=document.getElementById('revenue-month-filter');
+    const expSel=document.getElementById('expense-month-filter'), revSel=document.getElementById('revenue-month-filter');
     expSel.innerHTML=''; revSel.innerHTML='';
-    Array.from(monthsForDropdown).sort().reverse().forEach(m=>{
-        expSel.innerHTML+=`<option value="${m}">${m}</option>`;
-        revSel.innerHTML+=`<option value="${m}">${m}</option>`;
-    });
+    Array.from(monthsForDropdown).sort().reverse().forEach(m=>{ expSel.innerHTML+=`<option value="${m}">${m}</option>`; revSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
-    const pnlSel=document.getElementById('pnl-month-filter');
-    pnlSel.innerHTML='';
-    Array.from(dayPnlMonths).sort().reverse().forEach(m=>{
-        pnlSel.innerHTML+=`<option value="${m}">${m}</option>`;
-    });
+    const pnlSel=document.getElementById('pnl-month-filter'); pnlSel.innerHTML='';
+    Array.from(dayPnlMonths).sort().reverse().forEach(m=>{ pnlSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
+    // Render Data
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
@@ -517,116 +379,65 @@ async function fetchAndRenderData(){
 
   }catch(e){
     console.error(e);
-    const el=document.getElementById('loading-indicator');
-    el.innerHTML="<i class='fas fa-exclamation-circle'></i> Error connecting to API.";
-    el.style.background="#fef2f2";el.style.color="#dc2626";
+    loader.innerHTML=`<i class='fas fa-exclamation-triangle'></i> Error: ${e.message}`;
+    loader.style.background="#fef2f2"; loader.style.color="#dc2626"; loader.style.border="1px solid #fecaca";
   }
 }
 
-// RENDER DAY-TO-DAY P&L (AGGREGATED)
 function renderDayToDayPnl(month) {
     if(!month) return;
-    
-    // Convert the aggregated object back to an array for sorting and rendering
     const dataObj = globalDayToDayPnl[month] || {};
     let dataArray = Object.values(dataObj);
-    
-    // Sort chronologically by the JS Date object
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
-    let html = '';
-    let totalRev = 0, totalExp = 0, totalNet = 0;
-    let i = 1;
-
+    let html = '', totalRev = 0, totalExp = 0, totalNet = 0, i = 1;
     dataArray.forEach(item => {
         let pc = item.net >= 0 ? 'c-green' : 'c-red';
         let pnlSign = item.net >= 0 ? '+' : '';
-        
-        html += `<tr>
-            <td style="color:var(--text-3);font-size:12px">${i++}</td>
-            <td style="font-weight:500;color:var(--text-1)">${item.dateStr}</td>
-            <td class="num-cell c-teal">${fmt(item.revenue)}</td>
-            <td class="num-cell c-amber">${fmt(item.expense)}</td>
-            <td class="num-cell ${pc}">${pnlSign}${fmt(item.net)}</td>
-        </tr>`;
-        totalRev += item.revenue;
-        totalExp += item.expense;
-        totalNet += item.net;
+        html += `<tr><td>${i++}</td><td>${item.dateStr}</td><td class="num-cell c-teal">${fmt(item.revenue)}</td><td class="num-cell c-amber">${fmt(item.expense)}</td><td class="num-cell ${pc}">${pnlSign}${fmt(item.net)}</td></tr>`;
+        totalRev += item.revenue; totalExp += item.expense; totalNet += item.net;
     });
 
-    if (i === 1) {
-        html = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-2)">No daily records found for ${month}</td></tr>`;
-    } else {
-        let tpc = totalNet >= 0 ? 'c-green' : 'c-red';
-        let tSign = totalNet >= 0 ? '+' : '';
-        html += `<tr class="total-row">
-            <td></td>
-            <td>Monthly Total</td>
-            <td class="num-cell c-teal">${fmt(totalRev)}</td>
-            <td class="num-cell c-amber">${fmt(totalExp)}</td>
-            <td class="num-cell ${tpc}">${tSign}${fmt(totalNet)}</td>
-        </tr>`;
-    }
+    if (i === 1) { html = `<tr><td colspan="5" style="text-align:center;padding:32px;">No daily records found</td></tr>`; } 
+    else { html += `<tr class="total-row"><td></td><td>Total</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell ${totalNet>=0?'c-green':'c-red'}">${totalNet>=0?'+':''}${fmt(totalNet)}</td></tr>`; }
 
     document.getElementById('day-pnl-table-body').innerHTML = html;
-    document.getElementById('pnl-month-title').innerText = `Day-to-Day Breakdown — ${month}`;
 }
 
 function renderRevenueDetails(month) {
     if(!month) return;
-    const dataObj = globalDetailedRevenue[month] || {};
-    const searchQuery = document.getElementById('revenue-search').value.toLowerCase();
-    
+    const dataObj = globalDetailedRevenue[month] || {}, searchQuery = document.getElementById('revenue-search').value.toLowerCase();
     let dataArray = Object.keys(dataObj).map(key => { return { program: key, amount: dataObj[key] }; });
     dataArray.sort((a, b) => b.amount - a.amount);
 
-    let html = '';
-    let total = 0;
-    let i = 1;
-
+    let html = '', total = 0, i = 1;
     dataArray.forEach(item => {
         if (item.program.toLowerCase().includes(searchQuery)) {
-            html += `<tr>
-                <td style="color:var(--text-3);font-size:12px">${i++}</td>
-                <td style="font-weight:500;color:var(--text-1)">${item.program}</td>
-                <td class="num-cell c-teal">${fmt(item.amount)}</td>
-            </tr>`;
+            html += `<tr><td>${i++}</td><td>${item.program}</td><td class="num-cell c-teal">${fmt(item.amount)}</td></tr>`;
             total += item.amount;
         }
     });
 
-    if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-2)">No programs found</td></tr>`; } 
-    else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':'Revenue'} for ${month}</td><td class="num-cell c-teal">${fmt(total)}</td></tr>`; }
-
+    if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No programs found</td></tr>`; } 
+    else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-teal">${fmt(total)}</td></tr>`; }
     document.getElementById('revenue-table-body').innerHTML = html;
-    document.getElementById('rev-month-title').innerText = `Detailed Breakdown — ${month}`;
 }
 
 function renderExpenseDetails(month) {
     if(!month) return;
-    const data = globalDetailedExpenses[month] || [];
-    const searchQuery = document.getElementById('expense-search').value.toLowerCase();
+    const data = globalDetailedExpenses[month] || [], searchQuery = document.getElementById('expense-search').value.toLowerCase();
     
-    let html = '';
-    let total = 0;
-    let i = 1;
-
+    let html = '', total = 0, i = 1;
     data.forEach(item => {
         if (item.category.toLowerCase().includes(searchQuery)) {
-            html += `<tr>
-                <td style="color:var(--text-3);font-size:12px">${i++}</td>
-                <td style="font-weight:500;color:var(--text-1)">${item.category}</td>
-                <td class="num-cell c-amber">${fmt(item.amount)}</td>
-            </tr>`;
+            html += `<tr><td>${i++}</td><td>${item.category}</td><td class="num-cell c-amber">${fmt(item.amount)}</td></tr>`;
             total += item.amount;
         }
     });
 
-    if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-2)">No categories found</td></tr>`; } 
-    else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':'Expenses'} for ${month}</td><td class="num-cell c-amber">${fmt(total)}</td></tr>`; }
-
+    if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No categories found</td></tr>`; } 
+    else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-amber">${fmt(total)}</td></tr>`; }
     document.getElementById('expense-table-body').innerHTML = html;
-    document.getElementById('exp-month-title').innerText = `Detailed Breakdown — ${month}`;
 }
 
 function renderDashboard(fy){
@@ -637,24 +448,16 @@ function renderDashboard(fy){
     labels.push(d.displayMonth.replace(/(\w+) (\d+)/,'$1 $2'));
     revs.push(d.revenue);exps.push(d.expense);pnls.push(pnl);
     totalRev+=d.revenue;totalExp+=d.expense;totalPnl+=pnl;
-    const pc=pnl>=0?'c-green':'c-red';
-    const pnlSign=pnl>=0?'+':'';
+    
     html+=`<tr>
-      <td style="color:var(--text-3);font-size:12px">${i++}</td>
-      <td><span class="month-name">${d.displayMonth}</span><span class="fy-pill">${d.fy}</span></td>
-      <td class="num-cell c-teal">${fmt(d.revenue)}</td>
-      <td class="num-cell c-amber">${fmt(d.expense)}</td>
-      <td class="num-cell ${pc}">${pnlSign}${fmt(pnl)}</td>
-      <td class="center-cell"><span class="count-badge">${d.count}</span></td>
-      <td><span class="status-live">Live</span></td>
+      <td>${i++}</td><td><span class="month-name">${d.displayMonth}</span><span class="fy-pill">${d.fy}</span></td>
+      <td class="num-cell c-teal">${fmt(d.revenue)}</td><td class="num-cell c-amber">${fmt(d.expense)}</td>
+      <td class="num-cell ${pnl>=0?'c-green':'c-red'}">${pnl>=0?'+':''}${fmt(pnl)}</td>
     </tr>`;
   }
 
-  if(i===1){ html=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-2)">No data</td></tr>`; } 
-  else {
-    const tpc=totalPnl>=0?'c-green':'c-red';
-    html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell ${tpc}">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td><td></td></tr>`;
-  }
+  if(i===1){ html=`<tr><td colspan="5" style="text-align:center;padding:32px;">No data</td></tr>`; } 
+  else { html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell ${totalPnl>=0?'c-green':'c-red'}">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td></tr>`; }
 
   document.getElementById('tot-revenue').textContent=fmt(totalRev);
   document.getElementById('tot-expense').textContent=fmt(totalExp);
@@ -662,14 +465,18 @@ function renderDashboard(fy){
   document.getElementById('table-body').innerHTML=html;
 
   const card=document.getElementById('pnl-card');
-  const icon=document.getElementById('pnl-icon');
-  if(totalPnl>=0){ card.className='metric-card mc-green'; icon.innerHTML='<i class="fas fa-arrow-trend-up"></i>'; } 
-  else { card.className='metric-card mc-red'; icon.innerHTML='<i class="fas fa-arrow-trend-down"></i>'; }
+  card.className = totalPnl>=0 ? 'metric-card mc-green' : 'metric-card mc-red';
+  document.getElementById('pnl-icon').innerHTML = totalPnl>=0 ? '<i class="fas fa-arrow-trend-up"></i>' : '<i class="fas fa-arrow-trend-down"></i>';
 
   if(barChartInstance)barChartInstance.destroy();
   if(lineChartInstance)lineChartInstance.destroy();
   const shortLabels=labels.map(l=>l.slice(0,3)+" "+l.split(" ")[1]);
-  const lineColor=totalPnl>=0?'#16a34a':'#dc2626';
-
+  
   barChartInstance=new Chart(document.getElementById('barChart').getContext('2d'),{ type:'bar', data:{labels:shortLabels,datasets:[{label:'Revenue',data:revs,backgroundColor:'#0d9488',borderRadius:5},{label:'Expense',data:exps,backgroundColor:'#d97706',borderRadius:5}]}, options:{responsive:true,maintainAspectRatio:false} });
-  lineChartInstance=new Chart(document.getElementById('lineChart').getContext('2d'),{ type:'line', data:{labels:shortLabels,datasets:[{label:'Net P&L',data:pnls,borderColor:lineColor,backgroundColor:lineColor+'20',fill:true,tension:0.35}]}, options:{responsive:true,
+  lineChartInstance=new Chart(document.getElementById('lineChart').getContext('2d'),{ type:'line', data:{labels:shortLabels,datasets:[{label:'Net P&L',data:pnls,borderColor:totalPnl>=0?'#16a34a':'#dc2626',backgroundColor:(totalPnl>=0?'#16a34a':'#dc2626')+'20',fill:true,tension:0.35}]}, options:{responsive:true,maintainAspectRatio:false} });
+}
+
+window.onload=fetchAndRenderData;
+</script>
+</body>
+</html>
