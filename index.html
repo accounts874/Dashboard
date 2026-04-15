@@ -15,7 +15,7 @@
     --sidebar:#0f1623; --sidebar-hover:rgba(255,255,255,0.06); --sidebar-active:rgba(251,146,60,0.12);
     --bg:#f0f2f7; --surface:#ffffff; --surface-alt:#f7f8fc;
     --accent:#f97316; --accent-soft:#fff7ed;
-    --teal:#0284c7; --teal-soft:#f0fdfa; /* Adjusted to match your image blue/teal */
+    --teal:#0284c7; --teal-soft:#f0fdfa; 
     --amber:#d97706; --amber-soft:#fffbeb;
     --red:#dc2626; --red-soft:#fef2f2;
     --green:#16a34a; --green-soft:#f0fdf4;
@@ -25,7 +25,6 @@
   }
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);display:flex;min-height:100vh;font-size:14px;}
 
-  /* SIDEBAR */
   .sidebar{width:240px;background:var(--sidebar);display:flex;flex-direction:column;padding:0;position:sticky;top:0;height:100vh;flex-shrink:0}
   .logo-area{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}
   .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
@@ -37,7 +36,6 @@
   .nav-item.active{background:var(--sidebar-active);color:#fb923c;font-weight:500}
   .nav-item i{width:16px;text-align:center}
 
-  /* MAIN & VIEWS */
   .main-wrapper{flex:1;display:flex;flex-direction:column;min-width:0;padding:28px 28px 40px}
   .view-section { display: none; }
   .view-section.active-view { display: block; animation: fadeIn 0.3s ease; }
@@ -61,7 +59,9 @@
   .section-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border)}
   .section-title{font-size:15px;font-weight:600;}
   .header-controls { display: flex; gap: 12px; }
-  .search-input { padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;}
+  .search-wrapper { position: relative; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 12px; }
+  .search-input { padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; width: 220px;}
   .fy-select{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm); outline:none;}
 
   .table-wrap{overflow-x:auto}
@@ -74,15 +74,14 @@
   .c-teal{color:var(--teal)} .c-amber{color:var(--amber)} .c-green{color:var(--green)} .c-red{color:var(--red)}
   .total-row td{background:var(--surface-alt);font-weight:600;border-top:2px solid var(--border)}
   
-  /* BADGES & PILLS FOR DAY-TO-DAY P&L */
   .status-profit { background: var(--green-soft); color: var(--green); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid rgba(22,163,74,0.15); display: inline-block; }
   .status-loss { background: var(--red-soft); color: var(--red); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid rgba(220,38,38,0.15); display: inline-block;}
-  .bank-pill { background: #f3f4f6; color: #4b5563; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;}
-  .bank-pill.kotak { background: #fce7f3; color: #be185d; } /* Pink for Kotak */
-  .bank-pill.axis { background: #f3e8ff; color: #7e22ce; } /* Purple for Axis */
-  .bank-pill.razorpay { background: #e0f2fe; color: #0284c7; } /* Blue for Razorpay */
+  .bank-pill { background: #f3f4f6; color: #4b5563; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; display: inline-block;}
+  .bank-pill.kotak { background: #fce7f3; color: #be185d; } 
+  .bank-pill.axis { background: #f3e8ff; color: #7e22ce; } 
+  .bank-pill.razorpay { background: #e0f2fe; color: #0284c7; } 
 
-  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px; margin-bottom: 24px;}
   .chart-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px 24px; border: 1px solid var(--border);}
   .chart-title{font-size:14px;font-weight:600;margin-bottom: 15px;}
   .chart-wrap{position:relative;height:220px;width:100%}
@@ -104,7 +103,6 @@
 </aside>
 
 <main class="main-wrapper">
-  
   <div class="topbar">
     <div>
       <div class="page-title" id="main-title">Accounts Dashboard</div>
@@ -124,6 +122,11 @@
       <div class="metric-card mc-green" id="pnl-card"><div class="metric-label">Net P&amp;L</div><div class="metric-value" id="tot-pnl" style="color:var(--green)">₹0</div></div>
     </div>
 
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Revenue vs Expense Trend</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Net P&amp;L Trend</div><div class="chart-wrap"><canvas id="lineChart"></canvas></div></div>
+    </div>
+
     <div class="section">
       <div class="section-header">
         <div class="section-title">Month-wise P&amp;L Summary</div>
@@ -131,32 +134,24 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr>
-            <th style="width:40px">#</th>
-            <th>Month</th>
-            <th style="text-align:right">Revenue (₹)</th>
-            <th style="text-align:right">Expense (₹)</th>
-            <th style="text-align:right">Net P&amp;L (₹)</th>
-            <th style="text-align:center">Transactions</th>
-            <th style="text-align:center">Status</th>
-          </tr></thead>
+          <thead><tr><th>#</th><th>Month</th><th style="text-align:right">Revenue (₹)</th><th style="text-align:right">Expense (₹)</th><th style="text-align:right">Net P&amp;L (₹)</th></tr></thead>
           <tbody id="table-body"></tbody>
         </table>
       </div>
     </div>
-
-    <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">Revenue vs Expense</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Net P&amp;L Trend</div><div class="chart-wrap"><canvas id="lineChart"></canvas></div></div>
-    </div>
   </div>
 
   <div id="view-expenses" class="view-section">
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title" id="exp-pie-title">Expense Breakdown</div><div class="chart-wrap"><canvas id="expensePieChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Month-wise Expense Trend</div><div class="chart-wrap"><canvas id="expenseTrendChart"></canvas></div></div>
+    </div>
+
     <div class="section">
       <div class="section-header">
         <div class="section-title" id="exp-month-title">Detailed Expenses</div>
         <div class="header-controls">
-            <input type="text" id="expense-search" class="search-input" placeholder="Search category..." oninput="renderExpenseDetails(document.getElementById('expense-month-filter').value)">
+            <div class="search-wrapper"><i class="fas fa-search search-icon"></i><input type="text" id="expense-search" class="search-input" placeholder="Search category..." oninput="renderExpenseDetails(document.getElementById('expense-month-filter').value)"></div>
             <select id="expense-month-filter" class="fy-select" onchange="renderExpenseDetails(this.value)"></select>
         </div>
       </div>
@@ -170,11 +165,16 @@
   </div>
 
   <div id="view-revenue" class="view-section">
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title" id="rev-pie-title">Revenue Breakdown</div><div class="chart-wrap"><canvas id="revenuePieChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Month-wise Revenue Trend</div><div class="chart-wrap"><canvas id="revenueTrendChart"></canvas></div></div>
+    </div>
+
     <div class="section">
       <div class="section-header">
         <div class="section-title" id="rev-month-title">Detailed Revenue</div>
         <div class="header-controls">
-            <input type="text" id="revenue-search" class="search-input" placeholder="Search program..." oninput="renderRevenueDetails(document.getElementById('revenue-month-filter').value)">
+            <div class="search-wrapper"><i class="fas fa-search search-icon"></i><input type="text" id="revenue-search" class="search-input" placeholder="Search program..." oninput="renderRevenueDetails(document.getElementById('revenue-month-filter').value)"></div>
             <select id="revenue-month-filter" class="fy-select" onchange="renderRevenueDetails(this.value)"></select>
         </div>
       </div>
@@ -188,6 +188,11 @@
   </div>
 
   <div id="view-pnl" class="view-section">
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title" id="daily-bar-title">Daily Rev vs Exp</div><div class="chart-wrap"><canvas id="dailyBarChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title" id="daily-line-title">Daily Net P&amp;L Trend</div><div class="chart-wrap"><canvas id="dailyLineChart"></canvas></div></div>
+    </div>
+
     <div class="section">
       <div class="section-header">
         <div class="section-title" id="pnl-month-title">Day-to-Day P&amp;L</div>
@@ -196,15 +201,9 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-              <th style="width:40px">#</th>
-              <th>Date</th>
-              <th>Particulars</th>
-              <th style="text-align:right">Debit (₹)</th>
-              <th style="text-align:right">Credit (₹)</th>
-              <th style="text-align:right">Amount (₹)</th>
-              <th style="text-align:center">Bank</th>
-              <th style="text-align:center">Category</th>
-              <th style="text-align:center">Status</th>
+              <th style="width:40px">#</th><th>Date</th><th>Particulars</th>
+              <th style="text-align:right">Debit (₹)</th><th style="text-align:right">Credit (₹)</th><th style="text-align:right">Amount (₹)</th>
+              <th style="text-align:center">Bank</th><th style="text-align:center">Category</th><th style="text-align:center">Status</th>
           </tr></thead>
           <tbody id="day-pnl-table-body"></tbody>
         </table>
@@ -215,11 +214,17 @@
 </main>
 
 <script>
-// YAHAN APNA NAYA APPS SCRIPT URL DAALIYE
+// YAHAN APNA APPS SCRIPT URL DAALIYE
 const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
 let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}; 
-let barChartInstance=null, lineChartInstance=null;
+// Chart Instances
+let barChartInst=null, lineChartInst=null;
+let expPieInst=null, expTrendInst=null;
+let revPieInst=null, revTrendInst=null;
+let dailyBarInst=null, dailyLineInst=null;
+
+const chartColors = ['#0284c7', '#d97706', '#16a34a', '#dc2626', '#7e22ce', '#db2777', '#ea580c', '#65a30d', '#0891b2', '#4f46e5', '#8b5cf6', '#ec4899'];
 
 const fmt=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v);
 const fullMonth=s=>{
@@ -252,15 +257,12 @@ function switchTab(tabId) {
 
   if(tabId === 'dashboard') {
       document.getElementById('main-title').innerText = "Accounts Dashboard";
-      const currentFy = document.getElementById('fy-filter').value || 'All';
-      renderDashboard(currentFy);
+      renderDashboard(document.getElementById('fy-filter').value || 'All');
   } else if (tabId === 'expenses') {
       document.getElementById('main-title').innerText = "Monthly Expenses";
-      document.getElementById('expense-search').value = ''; 
       renderExpenseDetails(document.getElementById('expense-month-filter').value);
   } else if (tabId === 'revenue') {
       document.getElementById('main-title').innerText = "Monthly Revenue";
-      document.getElementById('revenue-search').value = ''; 
       renderRevenueDetails(document.getElementById('revenue-month-filter').value);
   } else if (tabId === 'pnl') {
       document.getElementById('main-title').innerText = "Day-to-Day P&L";
@@ -272,15 +274,10 @@ async function fetchAndRenderData(){
   const loader = document.getElementById('loading-indicator');
   loader.style.display='flex';
   loader.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Fetching live data...`;
-  loader.style.background = "linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft))";
-  loader.style.color = "var(--amber)";
 
   try{
     const res=await fetch(apiUrl);
     if(!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-    const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("text/html")) throw new Error("API URL incorrect or Permissions not set to 'Anyone'.");
-
     const raw = await res.json();
     if (raw.status === "error") throw new Error("Apps Script Error: " + raw.message);
     
@@ -292,12 +289,11 @@ async function fetchAndRenderData(){
           k=k.charAt(0).toUpperCase()+k.slice(1);
           let displayMonth = fullMonth(k);
 
-          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
+          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0};
           let fee = parseAmt(r["Total Fee"]);
           let program = cleanProgramName(r["Selected Program"]);
 
           globalMonthlyData[k].revenue+=fee;
-          globalMonthlyData[k].count+=1;
           
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           if(!globalDetailedRevenue[displayMonth][program]) globalDetailedRevenue[displayMonth][program] = 0;
@@ -312,7 +308,7 @@ async function fetchAndRenderData(){
             k = k.charAt(0).toUpperCase() + k.slice(1);
             let displayMonth = fullMonth(k);
 
-            if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0,count:0};
+            if(!globalMonthlyData[k]) globalMonthlyData[k]={revenue:0,expense:0};
 
             let ext = parseAmt(r["Extension"]), work = parseAmt(r["Workshop"]), act = parseAmt(r["Activation"]);
             globalMonthlyData[k].revenue += (ext + work + act);
@@ -330,7 +326,7 @@ async function fetchAndRenderData(){
           k=k.charAt(0).toUpperCase()+k.slice(1);
           let displayMonth = fullMonth(k);
           
-          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0,count:0};
+          if(!globalMonthlyData[k])globalMonthlyData[k]={revenue:0,expense:0};
           globalMonthlyData[k].expense+=parseAmt(r["Amount"]);
 
           if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
@@ -338,7 +334,6 @@ async function fetchAndRenderData(){
         });
     }
 
-    // UPDATED: Mapping the specific columns from Day-Day P&L
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
@@ -352,11 +347,8 @@ async function fetchAndRenderData(){
             if(isNaN(d.getTime())) return; 
             
             let displayMonth = `${d.toLocaleString('en-US', { month: 'long' })} ${d.getFullYear()}`; 
+            let formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\//g, '-');
             
-            // Format to DD-MM-YYYY
-            let formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
-            
-            // Extract Columns correctly from the backend
             let particulars = String(r.ExpensePart || r.RevenuePart || "—").trim();
             let debitAmt = parseAmt(r.Debit);
             let creditAmt = parseAmt(r.Credit);
@@ -365,16 +357,9 @@ async function fetchAndRenderData(){
             let category = String(r.ExpCategory || r.RevCategory || "—").trim();
 
             if(!globalDayToDayPnl[displayMonth]) globalDayToDayPnl[displayMonth] = [];
-            
             globalDayToDayPnl[displayMonth].push({
-                dateObj: d, 
-                dateStr: formattedDate, 
-                particulars: particulars,
-                debit: debitAmt,
-                credit: creditAmt,
-                amount: netAmt,
-                bank: bankName,
-                category: category
+                dateObj: d, dateStr: formattedDate, particulars: particulars,
+                debit: debitAmt, credit: creditAmt, amount: netAmt, bank: bankName, category: category
             });
         });
     }
@@ -406,24 +391,31 @@ async function fetchAndRenderData(){
   }catch(e){
     console.error(e);
     loader.innerHTML=`<i class='fas fa-exclamation-triangle'></i> Error: ${e.message}`;
-    loader.style.background="#fef2f2"; loader.style.color="#dc2626"; loader.style.border="1px solid #fecaca";
+    loader.style.background="#fef2f2"; loader.style.color="#dc2626";
   }
 }
 
-// RENDERING DAY-TO-DAY DETAILED TABLE (EXACT MOCKUP MATCH)
+function getSortedMonthTrendData() {
+    let arr = [];
+    for(const [k,d] of Object.entries(globalMonthlyData)) {
+        arr.push({ label: d.displayMonth, short: d.displayMonth.split(" ")[0].slice(0,3) + " " + d.displayMonth.split(" ")[1], rev: d.revenue, exp: d.expense, dateObj: new Date(k) });
+    }
+    return arr.sort((a,b) => a.dateObj - b.dateObj);
+}
+
+// RENDERING DAY-TO-DAY
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
     let html = '', i = 1;
-    
+    let dailyAgg = {};
+
     dataArray.forEach(item => {
-        // Format logic exactly like image
         let debitHtml = item.debit > 0 ? `<span class="c-red" style="font-weight:600;">${fmt(item.debit)}</span>` : '—';
         let creditHtml = item.credit > 0 ? `<span class="c-teal" style="font-weight:600;">${fmt(item.credit)}</span>` : '—';
         let statusHtml = item.amount >= 0 ? `<span class="status-profit">Profit</span>` : `<span class="status-loss">Loss</span>`;
-        
         let bankClass = item.bank.toLowerCase().replace(/\s/g, '');
         let bankHtml = item.bank !== '—' ? `<span class="bank-pill ${bankClass}">${item.bank}</span>` : '—';
 
@@ -438,11 +430,37 @@ function renderDayToDayPnl(month) {
             <td class="center-cell" style="color:var(--text-2)">${item.category}</td>
             <td class="center-cell">${statusHtml}</td>
         </tr>`;
+
+        // Aggregate for Charts
+        if(!dailyAgg[item.dateStr]) dailyAgg[item.dateStr] = { rev:0, exp:0, net:0 };
+        if(item.amount > 0) dailyAgg[item.dateStr].rev += item.amount;
+        else dailyAgg[item.dateStr].exp += Math.abs(item.amount);
+        dailyAgg[item.dateStr].net += item.amount;
     });
 
     if (dataArray.length === 0) { html = `<tr><td colspan="9" style="text-align:center;padding:32px;">No transactions found</td></tr>`; } 
     document.getElementById('day-pnl-table-body').innerHTML = html;
     document.getElementById('pnl-month-title').innerText = `Day-to-Day Breakdown — ${month}`;
+    document.getElementById('daily-bar-title').innerText = `Daily Rev vs Exp — ${month}`;
+    document.getElementById('daily-line-title').innerText = `Daily Net P&L Trend — ${month}`;
+
+    // Render Daily Charts
+    if(dailyBarInst) dailyBarInst.destroy();
+    if(dailyLineInst) dailyLineInst.destroy();
+
+    let dLabels = Object.keys(dailyAgg);
+    let dRevs = dLabels.map(k => dailyAgg[k].rev);
+    let dExps = dLabels.map(k => dailyAgg[k].exp);
+    let dNets = dLabels.map(k => dailyAgg[k].net);
+
+    dailyBarInst = new Chart(document.getElementById('dailyBarChart').getContext('2d'), {
+        type: 'bar', data: { labels: dLabels, datasets: [{label:'Revenue', data:dRevs, backgroundColor:'#0284c7', borderRadius:4}, {label:'Expense', data:dExps, backgroundColor:'#d97706', borderRadius:4}] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
+    });
+    dailyLineInst = new Chart(document.getElementById('dailyLineChart').getContext('2d'), {
+        type: 'line', data: { labels: dLabels, datasets: [{label:'Net P&L', data:dNets, borderColor:'#16a34a', backgroundColor:'#16a34a20', fill:true, tension:0.3}] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
+    });
 }
 
 function renderRevenueDetails(month) {
@@ -452,98 +470,116 @@ function renderRevenueDetails(month) {
     dataArray.sort((a, b) => b.amount - a.amount);
 
     let html = '', total = 0, i = 1;
+    let pieLabels = [], pieData = [];
+
     dataArray.forEach(item => {
         if (item.program.toLowerCase().includes(searchQuery)) {
             html += `<tr><td>${i++}</td><td>${item.program}</td><td class="num-cell c-teal">${fmt(item.amount)}</td></tr>`;
             total += item.amount;
+            pieLabels.push(item.program);
+            pieData.push(item.amount);
         }
     });
 
     if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No programs found</td></tr>`; } 
     else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-teal">${fmt(total)}</td></tr>`; }
     document.getElementById('revenue-table-body').innerHTML = html;
+    document.getElementById('rev-month-title').innerText = `Detailed Breakdown — ${month}`;
+    document.getElementById('rev-pie-title').innerText = `Revenue Breakdown — ${month}`;
+
+    // Render Revenue Charts
+    if(revPieInst) revPieInst.destroy();
+    if(revTrendInst) revTrendInst.destroy();
+
+    revPieInst = new Chart(document.getElementById('revenuePieChart').getContext('2d'), {
+        type: 'doughnut', data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: chartColors }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: {size: 10} } } } }
+    });
+
+    let trendData = getSortedMonthTrendData();
+    revTrendInst = new Chart(document.getElementById('revenueTrendChart').getContext('2d'), {
+        type: 'bar', data: { labels: trendData.map(t=>t.short), datasets: [{ label:'Total Revenue', data: trendData.map(t=>t.rev), backgroundColor:'#0284c7', borderRadius:4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
 }
 
 function renderExpenseDetails(month) {
     if(!month) return;
     const data = globalDetailedExpenses[month] || [], searchQuery = document.getElementById('expense-search').value.toLowerCase();
+    
     let html = '', total = 0, i = 1;
+    let pieMap = {}; // Aggregate categories for pie chart if there are multiple
+
     data.forEach(item => {
         if (item.category.toLowerCase().includes(searchQuery)) {
             html += `<tr><td>${i++}</td><td>${item.category}</td><td class="num-cell c-amber">${fmt(item.amount)}</td></tr>`;
             total += item.amount;
+            pieMap[item.category] = (pieMap[item.category] || 0) + item.amount;
         }
     });
 
     if (i === 1) { html = `<tr><td colspan="3" style="text-align:center;padding:32px;">No categories found</td></tr>`; } 
     else { html += `<tr class="total-row"><td></td><td>Total ${searchQuery?'Filtered':''}</td><td class="num-cell c-amber">${fmt(total)}</td></tr>`; }
     document.getElementById('expense-table-body').innerHTML = html;
+    document.getElementById('exp-month-title').innerText = `Detailed Breakdown — ${month}`;
+    document.getElementById('exp-pie-title').innerText = `Expense Breakdown — ${month}`;
+
+    // Render Expense Charts
+    if(expPieInst) expPieInst.destroy();
+    if(expTrendInst) expTrendInst.destroy();
+
+    expPieInst = new Chart(document.getElementById('expensePieChart').getContext('2d'), {
+        type: 'doughnut', data: { labels: Object.keys(pieMap), datasets: [{ data: Object.values(pieMap), backgroundColor: chartColors }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: {size: 10} } } } }
+    });
+
+    let trendData = getSortedMonthTrendData();
+    expTrendInst = new Chart(document.getElementById('expenseTrendChart').getContext('2d'), {
+        type: 'bar', data: { labels: trendData.map(t=>t.short), datasets: [{ label:'Total Expense', data: trendData.map(t=>t.exp), backgroundColor:'#d97706', borderRadius:4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
 }
 
 function renderDashboard(fy){
   let labels=[],revs=[],exps=[],pnls=[],totalRev=0,totalExp=0,totalPnl=0,html="",i=1;
-  for(const [k,d] of Object.entries(globalMonthlyData)){
-    if(fy!=='All'&&d.fy!==fy)continue;
-    const pnl = d.revenue-d.expense;
+  let trendData = getSortedMonthTrendData();
+
+  trendData.forEach(t => {
+    if(fy!=='All' && globalMonthlyData[t.label].fy !== fy) return;
+    const pnl = t.rev - t.exp;
+    labels.push(t.short); revs.push(t.rev); exps.push(t.exp); pnls.push(pnl);
+    totalRev+=t.rev; totalExp+=t.exp; totalPnl+=pnl;
     
-    let splitLabel = d.displayMonth.split(" ");
-    let shortName = splitLabel.length > 1 ? splitLabel[0].substring(0,3) + " " + splitLabel[1] : d.displayMonth;
-    labels.push(shortName);
-    
-    revs.push(d.revenue); exps.push(d.expense); pnls.push(pnl);
-    totalRev+=d.revenue; totalExp+=d.expense; totalPnl+=pnl;
-    
-    let isPositive = pnl >= 0;
-    let colorClass = isPositive ? 'var(--green)' : 'var(--red)';
-    let pnlSign = isPositive ? '+' : '';
-    
+    let colorClass = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     html+=`<tr>
       <td>${i++}</td>
-      <td><span style="font-weight:600;color:var(--text-1)">${d.displayMonth}</span><span class="fy-pill">${d.fy}</span></td>
-      <td class="num-cell c-teal">${fmt(d.revenue)}</td>
-      <td class="num-cell c-amber">${fmt(d.expense)}</td>
-      <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnlSign}${fmt(pnl)}</td>
-      <td class="center-cell"><span class="count-badge">${d.count}</span></td>
-      <td class="center-cell"><span class="status-live">Live</span></td>
+      <td><span style="font-weight:600;color:var(--text-1)">${t.label}</span><span class="fy-pill">${globalMonthlyData[t.label].fy}</span></td>
+      <td class="num-cell c-teal">${fmt(t.rev)}</td>
+      <td class="num-cell c-amber">${fmt(t.exp)}</td>
+      <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnl>=0?'+':''}${fmt(pnl)}</td>
     </tr>`;
-  }
+  });
 
-  if(i===1){ html=`<tr><td colspan="7" style="text-align:center;padding:32px;">No data</td></tr>`; } 
+  if(i===1){ html=`<tr><td colspan="5" style="text-align:center;padding:32px;">No data</td></tr>`; } 
   else { 
       let tColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
-      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td><td></td></tr>`; 
+      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td></tr>`; 
   }
 
   document.getElementById('tot-revenue').textContent=fmt(totalRev);
   document.getElementById('tot-expense').textContent=fmt(totalExp);
-  
   const pnlValEl = document.getElementById('tot-pnl');
   pnlValEl.textContent = (totalPnl>=0?'+':'') + fmt(totalPnl);
   pnlValEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
   
   document.getElementById('table-body').innerHTML=html;
+  document.getElementById('pnl-card').className = totalPnl>=0 ? 'metric-card mc-green' : 'metric-card mc-red';
 
-  const card=document.getElementById('pnl-card');
-  card.className = totalPnl>=0 ? 'metric-card mc-green' : 'metric-card mc-red';
-
-  if(barChartInstance) barChartInstance.destroy();
-  if(lineChartInstance) lineChartInstance.destroy();
+  if(barChartInst) barChartInst.destroy();
+  if(lineChartInst) lineChartInst.destroy();
   
-  const lineColor = totalPnl>=0 ? '#16a34a' : '#dc2626';
-
-  const barCtx = document.getElementById('barChart').getContext('2d');
-  barChartInstance = new Chart(barCtx, { 
-      type:'bar', 
-      data:{labels:labels, datasets:[{label:'Revenue', data:revs, backgroundColor:'#0284c7', borderRadius:5}, {label:'Expense', data:exps, backgroundColor:'#d97706', borderRadius:5}]}, 
-      options:{responsive:true, maintainAspectRatio:false} 
-  });
-  
-  const lineCtx = document.getElementById('lineChart').getContext('2d');
-  lineChartInstance = new Chart(lineCtx, { 
-      type:'line', 
-      data:{labels:labels, datasets:[{label:'Net P&L', data:pnls, borderColor:lineColor, backgroundColor:lineColor+'20', fill:true, tension:0.35}]}, 
-      options:{responsive:true, maintainAspectRatio:false} 
-  });
+  barChartInst = new Chart(document.getElementById('barChart').getContext('2d'),{ type:'bar', data:{labels:labels,datasets:[{label:'Revenue',data:revs,backgroundColor:'#0284c7',borderRadius:4}, {label:'Expense',data:exps,backgroundColor:'#d97706',borderRadius:4}]}, options:{responsive:true,maintainAspectRatio:false} });
+  lineChartInst = new Chart(document.getElementById('lineChart').getContext('2d'),{ type:'line', data:{labels:labels,datasets:[{label:'Net P&L',data:pnls,borderColor:totalPnl>=0?'#16a34a':'#dc2626',backgroundColor:(totalPnl>=0?'#16a34a':'#dc2626')+'20',fill:true,tension:0.35}]}, options:{responsive:true,maintainAspectRatio:false} });
 }
 
 window.onload=fetchAndRenderData;
