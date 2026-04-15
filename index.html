@@ -128,7 +128,6 @@
     <a class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a class="nav-item" id="nav-expenses" onclick="switchTab('expenses')"><i class="fas fa-file-invoice-dollar"></i> Monthly Expense</a>
     <a class="nav-item" id="nav-revenue" onclick="switchTab('revenue')"><i class="fas fa-money-bill-wave"></i> Monthly Revenue</a>
-    
     <a class="nav-item" id="nav-pnl" onclick="switchTab('pnl')"><i class="fas fa-chart-pie"></i> Monthly P&amp;L</a>
   </nav>
 </aside>
@@ -289,13 +288,13 @@
 </main>
 
 <script>
-// YOUR APPS SCRIPT URL
+// YAHAN APNA NAYA APPS SCRIPT URL DAALIYE
 const apiUrl="https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
 let globalMonthlyData={};
 let globalDetailedExpenses={}; 
 let globalDetailedRevenue={}; 
-let globalDayToDayPnl={}; // NEW: Store Day to Day breakdown
+let globalDayToDayPnl={}; 
 
 let barChartInstance=null;
 let lineChartInstance=null;
@@ -358,7 +357,6 @@ async function fetchAndRenderData(){
     globalDetailedRevenue={}; 
     globalDayToDayPnl={}; 
     
-    // Process Regular Sales
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
@@ -378,7 +376,6 @@ async function fetchAndRenderData(){
         });
     }
 
-    // Process Other Sales
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
             if(!r["Month"]) return;
@@ -410,7 +407,6 @@ async function fetchAndRenderData(){
         });
     }
 
-    // Process Expenses
     if(raw.expenses) {
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
@@ -428,35 +424,54 @@ async function fetchAndRenderData(){
         });
     }
 
-    // NEW: Process Day-to-Day P&L
+    // FIX FOR DAY-TO-DAY P&L
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
             if(!rawDate) return;
             
-            // Format date and extract Month for grouping
-            let d = new Date(rawDate);
+            // Robust Date Parsing for Google Sheets formats
+            let d;
+            if (typeof rawDate === 'string') {
+                if (rawDate.match(/^\d{2}-\d{2}-\d{4}/)) { // DD-MM-YYYY format
+                    let parts = rawDate.split(' ')[0].split('-'); 
+                    d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+                } else {
+                    d = new Date(rawDate);
+                }
+            } else {
+                d = new Date(rawDate); // If it's already a Date string from JSON
+            }
             if(isNaN(d)) return; 
             
             let monthName = d.toLocaleString('en-US', { month: 'long' });
             let year = d.getFullYear();
-            let displayMonth = `${monthName} ${year}`; // e.g. "January 2026"
+            let displayMonth = `${monthName} ${year}`; 
             
-            // Format date for display (e.g. 15-Jan-2026)
             let formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
 
-            let rev = Number(r["Revenue"]) || Number(r["Collection"]) || 0;
-            let exp = Number(r["Expense"]) || 0;
-
-            if(!globalDayToDayPnl[displayMonth]) globalDayToDayPnl[displayMonth] = [];
+            // Amount Column (F) indicates Revenue or Expense
+            let netAmount = Number(r["Amount"]) || 0;
             
-            globalDayToDayPnl[displayMonth].push({
-                dateObj: d, // Stored for sorting
-                dateStr: formattedDate,
-                revenue: rev,
-                expense: exp,
-                net: rev - exp
-            });
+            let rev = netAmount > 0 ? netAmount : 0;
+            let exp = netAmount < 0 ? Math.abs(netAmount) : 0;
+
+            if(!globalDayToDayPnl[displayMonth]) globalDayToDayPnl[displayMonth] = {};
+            
+            // AGGREGATING BY DATE
+            if(!globalDayToDayPnl[displayMonth][formattedDate]) {
+                 globalDayToDayPnl[displayMonth][formattedDate] = {
+                     dateObj: d,
+                     dateStr: formattedDate,
+                     revenue: 0,
+                     expense: 0,
+                     net: 0
+                 };
+            }
+            
+            globalDayToDayPnl[displayMonth][formattedDate].revenue += rev;
+            globalDayToDayPnl[displayMonth][formattedDate].expense += exp;
+            globalDayToDayPnl[displayMonth][formattedDate].net += netAmount;
         });
     }
 
@@ -471,14 +486,12 @@ async function fetchAndRenderData(){
       monthsForDropdown.add(d.displayMonth);
     }
     
-    // Also add months that exist in Day-to-Day tab
     for(const key of Object.keys(globalDayToDayPnl)) {
         dayPnlMonths.add(key);
     }
 
     document.getElementById('loading-indicator').style.display='none';
     
-    // Populate Dropdowns
     const sel=document.getElementById('fy-filter');
     sel.innerHTML='<option value="All">All Financial Years</option>';
     Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
@@ -497,7 +510,6 @@ async function fetchAndRenderData(){
         pnlSel.innerHTML+=`<option value="${m}">${m}</option>`;
     });
 
-    // Render Initial Data
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
@@ -511,12 +523,15 @@ async function fetchAndRenderData(){
   }
 }
 
-// NEW: Render Day-to-Day P&L
+// RENDER DAY-TO-DAY P&L (AGGREGATED)
 function renderDayToDayPnl(month) {
     if(!month) return;
-    const dataArray = globalDayToDayPnl[month] || [];
     
-    // Sort chronologically
+    // Convert the aggregated object back to an array for sorting and rendering
+    const dataObj = globalDayToDayPnl[month] || {};
+    let dataArray = Object.values(dataObj);
+    
+    // Sort chronologically by the JS Date object
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
     let html = '';
@@ -657,10 +672,4 @@ function renderDashboard(fy){
   const lineColor=totalPnl>=0?'#16a34a':'#dc2626';
 
   barChartInstance=new Chart(document.getElementById('barChart').getContext('2d'),{ type:'bar', data:{labels:shortLabels,datasets:[{label:'Revenue',data:revs,backgroundColor:'#0d9488',borderRadius:5},{label:'Expense',data:exps,backgroundColor:'#d97706',borderRadius:5}]}, options:{responsive:true,maintainAspectRatio:false} });
-  lineChartInstance=new Chart(document.getElementById('lineChart').getContext('2d'),{ type:'line', data:{labels:shortLabels,datasets:[{label:'Net P&L',data:pnls,borderColor:lineColor,backgroundColor:lineColor+'20',fill:true,tension:0.35}]}, options:{responsive:true,maintainAspectRatio:false} });
-}
-
-window.onload=fetchAndRenderData;
-</script>
-</body>
-</html>
+  lineChartInstance=new Chart(document.getElementById('lineChart').getContext('2d'),{ type:'line', data:{labels:shortLabels,datasets:[{label:'Net P&L',data:pnls,borderColor:lineColor,backgroundColor:lineColor+'20',fill:true,tension:0.35}]}, options:{responsive:true,
