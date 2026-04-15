@@ -76,6 +76,7 @@
   .total-row td{background:var(--surface-alt);font-weight:600;border-top:2px solid var(--border)}
   .count-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:2px 10px;font-size:12px;font-weight:500;color:var(--text-2)}
   .status-live{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:600;border:1px solid rgba(22,163,74,0.15)}
+  .status-live::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 
   .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .chart-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px 24px; border: 1px solid var(--border);}
@@ -116,7 +117,7 @@
     <div class="metrics-grid">
       <div class="metric-card"><div class="metric-label">Total Revenue</div><div class="metric-value c-teal" id="tot-revenue">₹0</div></div>
       <div class="metric-card mc-amber"><div class="metric-label">Total Expense</div><div class="metric-value c-amber" id="tot-expense">₹0</div></div>
-      <div class="metric-card mc-green" id="pnl-card"><div class="metric-label">Net P&amp;L</div><div class="metric-value" id="tot-pnl">₹0</div></div>
+      <div class="metric-card mc-green" id="pnl-card"><div class="metric-label">Net P&amp;L</div><div class="metric-value" id="tot-pnl" style="color:var(--green)">₹0</div></div>
     </div>
 
     <div class="section">
@@ -185,7 +186,7 @@
   <div id="view-pnl" class="view-section">
     <div class="section">
       <div class="section-header">
-        <div class="section-title" id="pnl-month-title">Day-to-Day P&amp;L (Detailed View)</div>
+        <div class="section-title" id="pnl-month-title">Day-to-Day P&amp;L</div>
         <select id="pnl-month-filter" class="fy-select" onchange="renderDayToDayPnl(this.value)"></select>
       </div>
       <div class="table-wrap">
@@ -244,6 +245,9 @@ function switchTab(tabId) {
 
   if(tabId === 'dashboard') {
       document.getElementById('main-title').innerText = "Accounts Dashboard";
+      // FIX: Force re-render of charts when dashboard tab is visible again
+      const currentFy = document.getElementById('fy-filter').value || 'All';
+      renderDashboard(currentFy);
   } else if (tabId === 'expenses') {
       document.getElementById('main-title').innerText = "Monthly Expenses";
       document.getElementById('expense-search').value = ''; 
@@ -268,15 +272,11 @@ async function fetchAndRenderData(){
   try{
     const res=await fetch(apiUrl);
     if(!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-    const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("text/html")) throw new Error("API URL incorrect or Permissions not set to 'Anyone'.");
-
     const raw = await res.json();
     if (raw.status === "error") throw new Error("Apps Script Error: " + raw.message);
     
     globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; 
     
-    // 1. Regular Sales
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
@@ -288,7 +288,7 @@ async function fetchAndRenderData(){
           let program = cleanProgramName(r["Selected Program"]);
 
           globalMonthlyData[k].revenue+=fee;
-          globalMonthlyData[k].count+=1; // Count maintained for dashboard table
+          globalMonthlyData[k].count+=1;
           
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           if(!globalDetailedRevenue[displayMonth][program]) globalDetailedRevenue[displayMonth][program] = 0;
@@ -296,7 +296,6 @@ async function fetchAndRenderData(){
         });
     }
 
-    // 2. Other Sales
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
             if(!r["Month"]) return;
@@ -316,7 +315,6 @@ async function fetchAndRenderData(){
         });
     }
 
-    // 3. Expenses
     if(raw.expenses) {
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
@@ -327,13 +325,10 @@ async function fetchAndRenderData(){
           globalMonthlyData[k].expense+=parseAmt(r["Amount"]);
 
           if(!globalDetailedExpenses[displayMonth]) globalDetailedExpenses[displayMonth] = [];
-          globalDetailedExpenses[displayMonth].push({
-              category: r["Category"], amount: parseAmt(r["Amount"])
-          });
+          globalDetailedExpenses[displayMonth].push({ category: r["Category"], amount: parseAmt(r["Amount"]) });
         });
     }
 
-    // 4. Day-to-Day P&L (DETAILED PARSER)
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
@@ -353,40 +348,25 @@ async function fetchAndRenderData(){
             let vchType = r["Vch Type"] || r["Type"] || "-";
 
             let rev = 0, exp = 0;
-
-            // Handle Tally format (Debit/Credit logic)
             if (r["Debit"] !== undefined || r["Credit"] !== undefined) {
                 let dr = parseAmt(r["Debit"]), cr = parseAmt(r["Credit"]);
                 let vt = String(vchType).toLowerCase();
-                
                 if (vt.includes("receipt")) { rev = dr || cr; exp = 0; }
                 else if (vt.includes("payment")) { exp = cr || dr; rev = 0; }
-                else { rev = cr; exp = dr; } // standard assumption
-            } 
-            // Handle single amount format
-            else if (r["Amount"] !== undefined || r["Amount (₹)"] !== undefined) {
+                else { rev = cr; exp = dr; }
+            } else if (r["Amount"] !== undefined || r["Amount (₹)"] !== undefined) {
                 let amt = parseAmt(r["Amount"] || r["Amount (₹)"]);
                 if (amt > 0) rev = amt;
                 if (amt < 0) exp = Math.abs(amt);
             }
 
             if(!globalDayToDayPnl[displayMonth]) globalDayToDayPnl[displayMonth] = [];
-            
-            // PUSH EVERY SINGLE ROW FOR DETAILED VIEW
-            globalDayToDayPnl[displayMonth].push({
-                dateObj: d, 
-                dateStr: formattedDate, 
-                particulars: particulars,
-                vchType: vchType,
-                revenue: rev, 
-                expense: exp, 
-                net: rev - exp 
-            });
+            globalDayToDayPnl[displayMonth].push({ dateObj: d, dateStr: formattedDate, particulars: particulars, vchType: vchType, revenue: rev, expense: exp, net: rev - exp });
         });
     }
 
     const fys=new Set(), monthsForDropdown = new Set(), dayPnlMonths = new Set();
-    for(const[k,d]of Object.entries(globalMonthlyData)){
+    for(const [k,d] of Object.entries(globalMonthlyData)){
       d.displayMonth=fullMonth(k); d.fy=getFY(d.displayMonth);
       fys.add(d.fy); monthsForDropdown.add(d.displayMonth);
     }
@@ -394,7 +374,6 @@ async function fetchAndRenderData(){
 
     loader.style.display='none';
     
-    // Fill Dropdowns
     const sel=document.getElementById('fy-filter'); sel.innerHTML='<option value="All">All Financial Years</option>';
     Array.from(fys).sort().reverse().forEach(f=>{sel.innerHTML+=`<option value="${f}">${f}</option>`});
     
@@ -405,7 +384,6 @@ async function fetchAndRenderData(){
     const pnlSel=document.getElementById('pnl-month-filter'); pnlSel.innerHTML='';
     Array.from(dayPnlMonths).sort().reverse().forEach(m=>{ pnlSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
-    // Render Data
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
@@ -418,32 +396,35 @@ async function fetchAndRenderData(){
   }
 }
 
-// RENDERING DAY-TO-DAY DETAILED TABLE
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
-    
-    // Sort chronologically
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
     let html = '', totalRev = 0, totalExp = 0, totalNet = 0;
     
     dataArray.forEach(item => {
-        let pc = item.net >= 0 ? 'c-green' : 'c-red';
-        let pnlSign = item.net >= 0 ? '+' : '';
+        let isPositive = item.net >= 0;
+        let colorClass = isPositive ? 'var(--green)' : 'var(--red)';
+        let pnlSign = isPositive ? '+' : '';
+        
         html += `<tr>
             <td style="white-space:nowrap;font-size:12px;color:var(--text-2);">${item.dateStr}</td>
             <td style="font-weight:500;color:var(--text-1)">${item.particulars}</td>
             <td style="font-size:12px;color:var(--text-2);">${item.vchType}</td>
             <td class="num-cell c-teal">${fmt(item.revenue)}</td>
             <td class="num-cell c-amber">${fmt(item.expense)}</td>
-            <td class="num-cell ${pc}">${pnlSign}${fmt(item.net)}</td>
+            <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnlSign}${fmt(item.net)}</td>
         </tr>`;
         totalRev += item.revenue; totalExp += item.expense; totalNet += item.net;
     });
 
     if (dataArray.length === 0) { html = `<tr><td colspan="6" style="text-align:center;padding:32px;">No transactions found</td></tr>`; } 
-    else { html += `<tr class="total-row"><td colspan="3">Monthly Total</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell ${totalNet>=0?'c-green':'c-red'}">${totalNet>=0?'+':''}${fmt(totalNet)}</td></tr>`; }
+    else { 
+        let tColor = totalNet >= 0 ? 'var(--green)' : 'var(--red)';
+        let tSign = totalNet >= 0 ? '+' : '';
+        html += `<tr class="total-row"><td colspan="3">Monthly Total</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${tSign}${fmt(totalNet)}</td></tr>`; 
+    }
 
     document.getElementById('day-pnl-table-body').innerHTML = html;
 }
@@ -470,7 +451,6 @@ function renderRevenueDetails(month) {
 function renderExpenseDetails(month) {
     if(!month) return;
     const data = globalDetailedExpenses[month] || [], searchQuery = document.getElementById('expense-search').value.toLowerCase();
-    
     let html = '', total = 0, i = 1;
     data.forEach(item => {
         if (item.category.toLowerCase().includes(searchQuery)) {
@@ -486,44 +466,71 @@ function renderExpenseDetails(month) {
 
 function renderDashboard(fy){
   let labels=[],revs=[],exps=[],pnls=[],totalRev=0,totalExp=0,totalPnl=0,html="",i=1;
-  for(const[,d]of Object.entries(globalMonthlyData)){
+  for(const [k,d] of Object.entries(globalMonthlyData)){
     if(fy!=='All'&&d.fy!==fy)continue;
-    const pnl=d.revenue-d.expense;
-    labels.push(d.displayMonth.replace(/(\w+) (\d+)/,'$1 $2'));
-    revs.push(d.revenue);exps.push(d.expense);pnls.push(pnl);
-    totalRev+=d.revenue;totalExp+=d.expense;totalPnl+=pnl;
-    const pc=pnl>=0?'c-green':'c-red';
+    const pnl = d.revenue-d.expense;
     
-    // RE-ADDED MISSING COLUMNS HERE (Transactions & Status)
+    // Parse label safely for charts
+    let splitLabel = d.displayMonth.split(" ");
+    let shortName = splitLabel.length > 1 ? splitLabel[0].substring(0,3) + " " + splitLabel[1] : d.displayMonth;
+    labels.push(shortName);
+    
+    revs.push(d.revenue); exps.push(d.expense); pnls.push(pnl);
+    totalRev+=d.revenue; totalExp+=d.expense; totalPnl+=pnl;
+    
+    let isPositive = pnl >= 0;
+    let colorClass = isPositive ? 'var(--green)' : 'var(--red)';
+    let pnlSign = isPositive ? '+' : '';
+    
     html+=`<tr>
       <td>${i++}</td>
       <td><span style="font-weight:600;color:var(--text-1)">${d.displayMonth}</span><span class="fy-pill">${d.fy}</span></td>
       <td class="num-cell c-teal">${fmt(d.revenue)}</td>
       <td class="num-cell c-amber">${fmt(d.expense)}</td>
-      <td class="num-cell ${pc}">${pnl>=0?'+':''}${fmt(pnl)}</td>
+      <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnlSign}${fmt(pnl)}</td>
       <td class="center-cell"><span class="count-badge">${d.count}</span></td>
       <td><span class="status-live">Live</span></td>
     </tr>`;
   }
 
   if(i===1){ html=`<tr><td colspan="7" style="text-align:center;padding:32px;">No data</td></tr>`; } 
-  else { html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell ${totalPnl>=0?'c-green':'c-red'}">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td><td></td></tr>`; }
+  else { 
+      let tColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-teal">${fmt(totalRev)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td><td></td></tr>`; 
+  }
 
   document.getElementById('tot-revenue').textContent=fmt(totalRev);
   document.getElementById('tot-expense').textContent=fmt(totalExp);
-  document.getElementById('tot-pnl').textContent=(totalPnl>=0?'+':'')+fmt(totalPnl);
+  
+  // FIX FOR TOP CARD COLOR
+  const pnlValEl = document.getElementById('tot-pnl');
+  pnlValEl.textContent = (totalPnl>=0?'+':'') + fmt(totalPnl);
+  pnlValEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  
   document.getElementById('table-body').innerHTML=html;
 
   const card=document.getElementById('pnl-card');
   card.className = totalPnl>=0 ? 'metric-card mc-green' : 'metric-card mc-red';
-  document.getElementById('pnl-icon').innerHTML = totalPnl>=0 ? '<i class="fas fa-arrow-trend-up"></i>' : '<i class="fas fa-arrow-trend-down"></i>';
 
-  if(barChartInstance)barChartInstance.destroy();
-  if(lineChartInstance)lineChartInstance.destroy();
-  const shortLabels=labels.map(l=>l.slice(0,3)+" "+l.split(" ")[1]);
+  // RENDER CHARTS
+  if(barChartInstance) barChartInstance.destroy();
+  if(lineChartInstance) lineChartInstance.destroy();
   
-  barChartInstance=new Chart(document.getElementById('barChart').getContext('2d'),{ type:'bar', data:{labels:shortLabels,datasets:[{label:'Revenue',data:revs,backgroundColor:'#0d9488',borderRadius:5},{label:'Expense',data:exps,backgroundColor:'#d97706',borderRadius:5}]}, options:{responsive:true,maintainAspectRatio:false} });
-  lineChartInstance=new Chart(document.getElementById('lineChart').getContext('2d'),{ type:'line', data:{labels:shortLabels,datasets:[{label:'Net P&L',data:pnls,borderColor:totalPnl>=0?'#16a34a':'#dc2626',backgroundColor:(totalPnl>=0?'#16a34a':'#dc2626')+'20',fill:true,tension:0.35}]}, options:{responsive:true,maintainAspectRatio:false} });
+  const lineColor = totalPnl>=0 ? '#16a34a' : '#dc2626';
+
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  barChartInstance = new Chart(barCtx, { 
+      type:'bar', 
+      data:{labels:labels, datasets:[{label:'Revenue', data:revs, backgroundColor:'#0d9488', borderRadius:5}, {label:'Expense', data:exps, backgroundColor:'#d97706', borderRadius:5}]}, 
+      options:{responsive:true, maintainAspectRatio:false} 
+  });
+  
+  const lineCtx = document.getElementById('lineChart').getContext('2d');
+  lineChartInstance = new Chart(lineCtx, { 
+      type:'line', 
+      data:{labels:labels, datasets:[{label:'Net P&L', data:pnls, borderColor:lineColor, backgroundColor:lineColor+'20', fill:true, tension:0.35}]}, 
+      options:{responsive:true, maintainAspectRatio:false} 
+  });
 }
 
 window.onload=fetchAndRenderData;
