@@ -76,8 +76,6 @@
   .c-teal{color:var(--teal)} .c-amber{color:var(--amber)} .c-green{color:var(--green)} .c-red{color:var(--red)}
   .total-row td{background:var(--surface-alt);font-weight:600;border-top:2px solid var(--border)}
   
-  .status-profit { background: var(--green-soft); color: var(--green); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid rgba(22,163,74,0.15); display: inline-block; }
-  .status-loss { background: var(--red-soft); color: var(--red); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid rgba(220,38,38,0.15); display: inline-block;}
   .bank-pill { background: #f3f4f6; color: #4b5563; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; display: inline-block;}
   .bank-pill.kotak { background: #fce7f3; color: #be185d; } 
   .bank-pill.axis { background: #f3e8ff; color: #7e22ce; } 
@@ -215,7 +213,6 @@
               <th style="text-align:center; color:var(--green)">Done Cnt</th>
               <th style="text-align:right; color:var(--amber)">U/P Rev (Pend)</th>
               <th style="text-align:center; color:var(--amber)">U/P Cnt</th>
-              
               <th style="text-align:right; color:var(--red)">Drop Out Rev (Pend)</th>
               <th style="text-align:center; color:var(--red)">Drop Out Cnt</th>
             </tr>
@@ -240,9 +237,14 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-              <th style="width:40px">#</th><th>Date</th><th>Particulars</th>
-              <th style="text-align:right">Debit (₹)</th><th style="text-align:right">Credit (₹)</th><th style="text-align:right">Amount (₹)</th>
-              <th style="text-align:center">Bank</th><th style="text-align:center">Category</th><th style="text-align:center">Status</th>
+              <th style="width:40px">#</th>
+              <th>Date</th>
+              <th>Particulars</th>
+              <th style="text-align:right">Debit (₹)</th>
+              <th style="text-align:right">Credit (₹)</th>
+              <th style="text-align:right">Amount (₹)</th>
+              <th style="text-align:center">Bank</th>
+              <th style="text-align:center">Category</th>
           </tr></thead>
           <tbody id="day-pnl-table-body"></tbody>
         </table>
@@ -260,8 +262,6 @@ const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGU
 
 // Global Storage
 let globalMonthlyData={}, globalDetailedExpenses={}, globalDetailedRevenue={}, globalDayToDayPnl={}, globalSalesData={}; 
-
-// Chart Instances
 let barChartInst=null, lineChartInst=null, expPieInst=null, expTrendInst=null, revPieInst=null, revTrendInst=null, dailyBarInst=null, dailyLineInst=null;
 
 const chartColors = ['#0284c7', '#d97706', '#16a34a', '#dc2626', '#7e22ce', '#db2777', '#ea580c', '#65a30d', '#0891b2', '#4f46e5', '#8b5cf6', '#ec4899'];
@@ -340,7 +340,7 @@ async function fetchAndRenderData(){
     
     globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; globalSalesData={};
     
-    // 1. Regular Sales Processing
+    // 1. Regular Sales
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
@@ -356,15 +356,12 @@ async function fetchAndRenderData(){
           let program = cleanProgramName(r["Selected Program"]);
           let status = String(r["Status"] || "").trim().toLowerCase();
 
-          // Fill Dashboard Data
           globalMonthlyData[displayMonth].revenue += fee;
           globalMonthlyData[displayMonth].count += 1; 
 
-          // Fill Revenue Breakdown
           if(!globalDetailedRevenue[displayMonth]) globalDetailedRevenue[displayMonth] = {};
           globalDetailedRevenue[displayMonth][program] = (globalDetailedRevenue[displayMonth][program] || 0) + fee;
 
-          // Fill Sales Tab Breakdown
           if(!globalSalesData[displayMonth]) {
               globalSalesData[displayMonth] = { fy: getFY(displayMonth), displayMonth: displayMonth, dateObj: new Date(displayMonth), totalRev: 0, totalCount: 0, doneRev: 0, doneCount: 0, dropoutRev: 0, dropoutCount: 0, underProcessRev: 0, underProcessCount: 0 };
           }
@@ -375,12 +372,9 @@ async function fetchAndRenderData(){
           if (status.includes("done") || status.includes("active") || status.includes("complete")) {
               globalSalesData[displayMonth].doneCount += 1;
               globalSalesData[displayMonth].doneRev += fee; 
-              
-          // FIXED: Now accurately detects "drop out" (with space) or "dropout"
           } else if (status.includes("dropout") || status.includes("drop out")) {
               globalSalesData[displayMonth].dropoutCount += 1;
               globalSalesData[displayMonth].dropoutRev += amtPending; 
-              
           } else if (status.includes("process") || status.includes("pending")) {
               globalSalesData[displayMonth].underProcessCount += 1;
               globalSalesData[displayMonth].underProcessRev += amtPending; 
@@ -388,7 +382,7 @@ async function fetchAndRenderData(){
         });
     }
 
-    // 2. Other Sales Processing
+    // 2. Other Sales
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
             if(!r["Month"]) return;
@@ -420,7 +414,7 @@ async function fetchAndRenderData(){
         });
     }
 
-    // 3. Expenses Processing
+    // 3. Expenses
     if(raw.expenses) {
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
@@ -437,7 +431,7 @@ async function fetchAndRenderData(){
         });
     }
 
-    // 4. Day to Day P&L Processing
+    // 4. Day to Day P&L
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
@@ -468,7 +462,6 @@ async function fetchAndRenderData(){
         });
     }
 
-    // Prepare Dropdowns
     const fys=new Set(), monthsForDropdown = new Set(), dayPnlMonths = new Set();
     for(const[k,d]of Object.entries(globalMonthlyData)){
       fys.add(d.fy); monthsForDropdown.add(d.displayMonth);
@@ -495,7 +488,6 @@ async function fetchAndRenderData(){
     const pnlSel=document.getElementById('pnl-month-filter'); pnlSel.innerHTML='';
     Array.from(dayPnlMonths).sort().reverse().forEach(m=>{ pnlSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 
-    // Initial Render
     renderDashboard('All');
     if(expSel.value) renderExpenseDetails(expSel.value);
     if(revSel.value) renderRevenueDetails(revSel.value);
@@ -521,15 +513,12 @@ function getSortedMonthTrendData() {
     return arr.sort((a,b) => a.dateObj - b.dateObj);
 }
 
-// RENDERING SALES DATA 
 function renderSalesData(fy) {
     let html = '', totalRev = 0, totalCount = 0, doneRev = 0, doneCount = 0, upRev = 0, upCount = 0, dropRev = 0, dropCount = 0;
-
     let sortedMonths = Object.values(globalSalesData).sort((a, b) => a.dateObj - b.dateObj);
 
     sortedMonths.forEach(d => {
         if(fy !== 'All' && d.fy !== fy) return;
-
         html += `<tr>
             <td style="font-weight:600;color:var(--text-1)">${d.displayMonth}</td>
             <td class="num-cell c-teal">${fmt(d.totalRev)}</td>
@@ -566,20 +555,24 @@ function renderSalesData(fy) {
     document.getElementById('sales-table-body').innerHTML = html;
 }
 
-// RENDERING DAY-TO-DAY
+// -----------------------------------------------------
+// DAY-TO-DAY RENDERER (UPDATED: Removed Status, Added Totals)
+// -----------------------------------------------------
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
     dataArray.sort((a, b) => a.dateObj - b.dateObj);
 
     let html = '', i = 1, dailyAgg = {};
+    let totalDebit = 0, totalCredit = 0, totalAmount = 0; // Initialize trackers for the bottom row
+
     dataArray.forEach(item => {
         let debitHtml = item.debit > 0 ? `<span class="c-red" style="font-weight:600;">${fmt(item.debit)}</span>` : '—';
         let creditHtml = item.credit > 0 ? `<span class="c-teal" style="font-weight:600;">${fmt(item.credit)}</span>` : '—';
-        let statusHtml = item.amount >= 0 ? `<span class="status-profit">Profit</span>` : `<span class="status-loss">Loss</span>`;
         let bankClass = item.bank.toLowerCase().replace(/\s/g, '');
         let bankHtml = item.bank !== '—' ? `<span class="bank-pill ${bankClass}">${item.bank}</span>` : '—';
 
+        // Add row without the Status column
         html += `<tr>
             <td style="color:var(--text-3);font-size:12px">${i++}</td>
             <td style="font-weight:600;color:var(--text-1)">${item.dateStr}</td>
@@ -589,8 +582,12 @@ function renderDayToDayPnl(month) {
             <td class="num-cell" style="font-weight:600; color:var(--text-1)">${fmt(item.amount)}</td>
             <td class="center-cell">${bankHtml}</td>
             <td class="center-cell" style="color:var(--text-2)">${item.category}</td>
-            <td class="center-cell">${statusHtml}</td>
         </tr>`;
+
+        // Update Totals
+        totalDebit += item.debit;
+        totalCredit += item.credit;
+        totalAmount += item.amount;
 
         if(!dailyAgg[item.dateStr]) dailyAgg[item.dateStr] = { rev:0, exp:0, net:0 };
         if(item.amount > 0) dailyAgg[item.dateStr].rev += item.amount;
@@ -598,7 +595,22 @@ function renderDayToDayPnl(month) {
         dailyAgg[item.dateStr].net += item.amount;
     });
 
-    if (dataArray.length === 0) { html = `<tr><td colspan="9" style="text-align:center;padding:32px;">No transactions found</td></tr>`; } 
+    if (dataArray.length === 0) { 
+        html = `<tr><td colspan="8" style="text-align:center;padding:32px;">No transactions found</td></tr>`; 
+    } else {
+        // Updated Total Row to show Debit/Credit/Net Sums
+        let tColor = totalAmount >= 0 ? 'var(--green)' : 'var(--red)';
+        let tSign = totalAmount >= 0 ? '+' : '';
+        html += `<tr class="total-row">
+            <td colspan="3">Monthly Total</td>
+            <td class="num-cell c-red">${fmt(totalDebit)}</td>
+            <td class="num-cell c-teal">${fmt(totalCredit)}</td>
+            <td class="num-cell" style="color: ${tColor}; font-weight:bold;">${tSign}${fmt(totalAmount)}</td>
+            <td></td>
+            <td></td>
+        </tr>`;
+    }
+
     document.getElementById('day-pnl-table-body').innerHTML = html;
     document.getElementById('pnl-month-title').innerText = `Day-to-Day Breakdown — ${month}`;
 
