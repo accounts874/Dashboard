@@ -52,7 +52,7 @@
   .loading-bar{background:linear-gradient(90deg,var(--accent-soft),#ffe4c4,var(--accent-soft));background-size:200%;animation:shimmer 1.5s infinite;border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--amber);font-weight:500;border:1px solid #fed7aa;margin-bottom:24px}
   @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
 
-  .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px} /* 4 Columns for Punched Amount */
+  .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
   .metric-card{background:var(--surface);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--shadow);border:1px solid var(--border);border-top:3px solid var(--teal);}
   
   .mc-slate{border-top-color:var(--slate)} 
@@ -157,7 +157,6 @@
             <th style="text-align:right">Expense (₹)</th>
             <th style="text-align:right">Net P&amp;L (₹)</th>
             <th style="text-align:center">Transactions</th>
-            <th style="text-align:center">Status</th>
           </tr></thead>
           <tbody id="table-body"></tbody>
         </table>
@@ -271,7 +270,7 @@
 
 <script>
 // ==========================================
-// YAHAN APNA NAYA APPS SCRIPT URL DAALIYE
+// YAHAN APNA GOOGLE APPS SCRIPT URL DAALIYE
 // ==========================================
 const apiUrl = "https://script.google.com/macros/s/AKfycbw8fTAc4KezTYaG0iBShOWGUf9_231aZVOq9_8qZG2wqvi4i_ni28S095dryKzGQGWlDg/exec"; 
 
@@ -354,6 +353,7 @@ async function fetchAndRenderData(){
     
     globalMonthlyData={}; globalDetailedExpenses={}; globalDetailedRevenue={}; globalDayToDayPnl={}; globalSalesData={};
     
+    // 1. Regular Sales Processing
     if(raw.sales) {
         raw.sales.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("sales","").trim();
@@ -365,19 +365,14 @@ async function fetchAndRenderData(){
           }
           
           let fee = parseAmt(r["Total Fee"]);
-          let amtPending = parseAmt(r["Amount Pending"] || r["Pending Amount"] || r["Pending"] || 0);
+          // Calculate pending safely
+          let amtPending = parseAmt(r["Amount Pending"] || r["Pending Amount"] || r["Pending"] || r["Balance Amount"] || r["Balance"] || 0);
           let program = cleanProgramName(r["Selected Program"]);
           let status = String(r["Status"] || "").trim().toLowerCase();
 
-          // Punched Logic
-          let explicitPunched = parseAmt(r["Punched Amount"] || r["Punched"] || r["Paid Amount"] || r["Paid"] || r["Collected Amount"] || r["Collected"]);
-          let punchedAmt = 0;
-          if (r["Punched Amount"] !== undefined || r["Paid Amount"] !== undefined || r["Collected Amount"] !== undefined) {
-              punchedAmt = explicitPunched;
-          } else {
-              punchedAmt = fee - amtPending;
-          }
-          if(punchedAmt < 0) punchedAmt = 0;
+          // FIXED PUNCHED LOGIC: Always Total Fee - Amount Pending
+          let punchedAmt = fee - amtPending;
+          if (punchedAmt < 0) punchedAmt = 0; // Safeguard
 
           globalMonthlyData[displayMonth].revenue += fee;
           globalMonthlyData[displayMonth].punched += punchedAmt;
@@ -406,6 +401,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // 2. Other Sales Processing
     if(raw.otherSales) {
         raw.otherSales.forEach(r => {
             if(!r["Month"]) return;
@@ -438,6 +434,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // 3. Expenses Processing
     if(raw.expenses) {
         raw.expenses.forEach(r=>{
           let k=r["SourceTab"].toLowerCase().replace("exp","").trim();
@@ -454,6 +451,7 @@ async function fetchAndRenderData(){
         });
     }
 
+    // 4. Day to Day P&L Processing
     if(raw.dayToDay) {
         raw.dayToDay.forEach(r => {
             let rawDate = r["Date"];
@@ -577,7 +575,7 @@ function renderSalesData(fy) {
     document.getElementById('sales-table-body').innerHTML = html;
 }
 
-// RENDER DAY TO DAY P&L (NO STATUS, WITH BOTTOM TOTALS)
+// RENDER DAY TO DAY P&L (STATUS REMOVED, SUM ADDED)
 function renderDayToDayPnl(month) {
     if(!month) return;
     const dataArray = globalDayToDayPnl[month] || [];
@@ -722,7 +720,6 @@ function renderDashboard(fy){
     let d = globalMonthlyData[t.label]; 
     if(fy !== 'All' && d.fy !== fy) return;
     
-    // Net P&L = Punched Amount - Expense
     const pnl = t.punched - t.exp;
     
     labels.push(t.short); revs.push(t.rev); puncheds.push(t.punched); exps.push(t.exp); pnls.push(pnl);
@@ -737,14 +734,13 @@ function renderDashboard(fy){
       <td class="num-cell c-amber">${fmt(t.exp)}</td>
       <td class="num-cell" style="color: ${colorClass}; font-weight:bold;">${pnl>=0?'+':''}${fmt(pnl)}</td>
       <td class="center-cell"><span class="count-badge">${d.count || 0}</span></td>
-      <td class="center-cell"><span class="status-live">Live</span></td>
     </tr>`;
   });
 
-  if(i===1){ html=`<tr><td colspan="8" style="text-align:center;padding:32px;">No data available</td></tr>`; } 
+  if(i===1){ html=`<tr><td colspan="7" style="text-align:center;padding:32px;">No data available</td></tr>`; } 
   else { 
       let tColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
-      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-slate">${fmt(totalRev)}</td><td class="num-cell c-teal">${fmt(totalPunched)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td><td></td></tr>`; 
+      html+=`<tr class="total-row"><td></td><td>Total (${i-1} months)</td><td class="num-cell c-slate">${fmt(totalRev)}</td><td class="num-cell c-teal">${fmt(totalPunched)}</td><td class="num-cell c-amber">${fmt(totalExp)}</td><td class="num-cell" style="color: ${tColor}; font-weight:bold;">${totalPnl>=0?'+':''}${fmt(totalPnl)}</td><td></td></tr>`; 
   }
 
   document.getElementById('tot-revenue').textContent=fmt(totalRev);
